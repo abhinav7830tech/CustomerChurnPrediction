@@ -120,7 +120,8 @@ flowchart LR
     MOD --> PRED
 
     subgraph UI["Streamlit Pages"]
-        APP[dashboard/app.py · Entry]
+        APP[app.py · Entry (st.navigation)]
+        H[dashboard/app.py · Home]
         A[Analytics]
         P[AI Prediction Lab]
         X[Explainable AI]
@@ -133,7 +134,7 @@ flowchart LR
     APP --> THEME
     UTL --> APP
     PRED --> APP
-    APP --> A & P & X & B & E
+    APP --> H & A & P & X & B & E
     P --> REP & PPT
     B --> REP & PPT
 
@@ -152,9 +153,9 @@ flowchart LR
 
 ```
 CustomerChurnPrediction/
-├── app.py                                  # Legacy Sprint-1 landing page (kept for reference)
-├── dashboard/                              # ⭐ Main Streamlit application
-│   ├── app.py                              # Entry point — Executive Dashboard (Home)
+├── app.py                                  # ⭐ Production entry point — st.navigation (sidebar nav)
+├── dashboard/                              # Main Streamlit application
+│   ├── app.py                              # Home page — Executive Dashboard (live KPIs)
 │   ├── theme.py                            # Design system — tokens, CSS, Plotly template, widgets
 │   ├── theme.css                           # Shared stylesheet (navy/gold corporate theme)
 │   ├── utils.py                            # Data loading, cleaning & KPI calculators
@@ -281,7 +282,10 @@ All dependencies are pinned loosely in [`requirements.txt`](requirements.txt):
 | `joblib` | Model serialization |
 | `fpdf2` | PDF report export |
 | `python-pptx` | PowerPoint deck export |
-| `jupyter`, `ipykernel` | Analysis notebooks (dev only) |
+
+> 💡 `jupyter` / `ipykernel` are notebook-only and intentionally **not** in
+> `requirements.txt` (kept out of the deployment image). Install them manually
+> to run `notebooks/churn_analysis.ipynb`: `pip install jupyter ipykernel`.
 
 ---
 
@@ -289,16 +293,17 @@ All dependencies are pinned loosely in [`requirements.txt`](requirements.txt):
 
 ```bash
 # From the project root, launch the dashboard
-streamlit run dashboard/app.py
+streamlit run app.py
 ```
 
-Open the browser to **http://localhost:8501** — the **Executive Dashboard** loads first, with all five additional tools available from the sidebar.
+Open the browser to **http://localhost:8501** — the **Home** page loads first, with all five additional tools available from the sidebar (`🏠 Home · 📊 Analytics · 🧪 Prediction Lab · 🧠 Explainable AI · 💼 Business Recommendation Engine · 📈 Executive Dashboard`).
 
 > ⚠️ Run the app from the **project root** (`CustomerChurnPrediction/`) so the `data/` and `models/` paths resolve correctly.
 
 ### Optional — run the analysis notebook
 
 ```bash
+pip install jupyter ipykernel   # notebook-only dependencies
 jupyter notebook notebooks/churn_analysis.ipynb
 ```
 
@@ -310,16 +315,16 @@ The notebook walks the full pipeline: data loading → EDA → preprocessing →
 
 ```bash
 # Standard launch
-streamlit run dashboard/app.py
+streamlit run app.py
 
 # Launch on a custom port
-streamlit run dashboard/app.py --server.port 8602
+streamlit run app.py --server.port 8602
 
 # Expose on your network (e.g. for local LAN access)
-streamlit run dashboard/app.py --server.address 0.0.0.0
+streamlit run app.py --server.address 0.0.0.0
 
 # Headless mode (no browser auto-open) — handy for servers
-streamlit run dashboard/app.py --server.headless true
+streamlit run app.py --server.headless true
 
 # Stop the running server
 #   Press Ctrl+C in the terminal
@@ -348,14 +353,16 @@ and no blocking issues were found.
 
 | Platform | Entry point | Start command |
 |---|---|---|
-| **Streamlit Cloud** | `dashboard/app.py` | Auto-installs `requirements.txt`; pick the file in the dashboard |
-| **Render** (Web Service) | `dashboard/app.py` | `streamlit run dashboard/app.py --server.address 0.0.0.0 --server.port $PORT` |
-| **Railway** | `dashboard/app.py` | `streamlit run dashboard/app.py --server.address 0.0.0.0 --server.port $PORT` |
+| **Streamlit Cloud** | `app.py` | Auto-installs `requirements.txt`; pick the file in the dashboard |
+| **Render** (Web Service) | `app.py` | `streamlit run app.py --server.address 0.0.0.0 --server.port $PORT` |
+| **Railway** | `app.py` | `streamlit run app.py --server.address 0.0.0.0 --server.port $PORT` |
 
-> ⚠️ **Set the Main file path to `dashboard/app.py` on Streamlit Cloud.** The
-> root `app.py` is a legacy Sprint-1 landing page and is auto-detected otherwise.
-> Pin the cloud Python runtime to **3.12 / 3.13** so `numba`/`llvmlite` wheels
-> (SHAP dependency) install cleanly.
+> ⚠️ **Set the Main file path to `app.py` on Streamlit Cloud.** It is the
+> production entry point — it builds the sidebar navigation and routes every
+> page via `st.navigation` / `st.Page`. Root-level `runtime.txt` (`3.13.3`)
+> pins the cloud Python runtime and `requirements.txt` pins `numba==0.66.0` /
+> `llvmlite==0.48.0`, which ship **Python 3.14** wheels so SHAP installs cleanly
+> on the cloud's default runtime too.
 
 ---
 

@@ -1,9 +1,18 @@
 """
-Executive Dashboard — Customer Churn Analytics Platform
+Home page — Customer Churn Analytics Platform (Executive Dashboard).
 
-Sprint 2: Live KPIs from dataset.
-All hardcoded values replaced with dynamically calculated metrics.
+Live KPIs from the dataset, key churn insights, and one-click navigation
+into the Analytics and AI Prediction Lab pages. Runs as the `home` page of
+the production entry point (`app.py`, which uses st.navigation).
+
+Version: 2.0.0 (Production)
 """
+
+import os
+import sys
+from datetime import datetime
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import theme
 
@@ -15,7 +24,6 @@ from utils import (
     get_churn_rate,
     get_avg_tenure,
     get_avg_monthly_charges,
-    get_avg_total_charges,
     get_top_churn_contract,
     get_retained_avg_monthly_charges,
     get_churned_avg_tenure,
@@ -27,11 +35,13 @@ from utils import (
 # PAGE CONFIG
 # ═══════════════════════════════════════════════════════════════════════════════
 
+_APP_VERSION = "2.0.0"
+
 st.set_page_config(
     page_title="Customer Churn Analytics Platform",
-    page_icon="📊",
+    page_icon="🏠",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -80,8 +90,8 @@ def _sidebar(total_customers: int) -> None:
 
         fields = [
             ("Developer", "Abhinav Agnihotri"),
-            ("Technologies", "Python · scikit-learn · XGBoost · SHAP · Pandas · Streamlit"),
-            ("Version", "1.0.0 (Sprint 2)"),
+            ("Technologies", "Python · Streamlit · XGBoost · Random Forest · SHAP · Plotly"),
+            ("Version", f"{_APP_VERSION} (Production)"),
             ("Dataset", f"IBM Telco Customer Churn · {total_customers:,} records"),
         ]
         for label, value in fields:
@@ -98,8 +108,9 @@ def _sidebar(total_customers: int) -> None:
             '<div class="sidebar-section">'
             '<div class="sidebar-label">GitHub</div>'
             '<div class="sidebar-value muted">'
-            '<a href="https://github.com/abhinav7830tech" target="_blank" rel="noopener noreferrer">'
-            'https://github.com/abhinav7830tech'
+            '<a href="https://github.com/abhinav7830tech/CustomerChurnPrediction" '
+            'target="_blank" rel="noopener noreferrer">'
+            'github.com/abhinav7830tech/CustomerChurnPrediction'
             '</a>'
             '</div>'
             '</div>',
@@ -124,10 +135,11 @@ def _header() -> None:
 
     badges = [
         ("Python", "#234556"),
+        ("Streamlit", "#234556"),
         ("XGBoost", "#234556"),
         ("Random Forest", "#234556"),
         ("SHAP", "#234556"),
-        ("SQLite", "#234556"),
+        ("Plotly", "#234556"),
         ("Pandas", "#234556"),
     ]
     badges_html = '<div class="badge-container">' + "".join(
@@ -208,24 +220,35 @@ def _insights_section(
 
 
 def _action_buttons() -> None:
-    """CTA buttons — navigate to the analytics and prediction pages."""
+    """CTA buttons — navigate to the Analytics and Prediction Lab pages."""
     st.markdown('<hr class="custom-divider">', unsafe_allow_html=True)
     cols = st.columns([1, 1.5, 0.5, 1.5, 1])
+    pages = st.session_state.get("_app_pages", {})
+    analytics_page = pages.get("analytics")
+    lab_page = pages.get("prediction_lab")
     with cols[1]:
-        st.page_link("pages/analytics.py", label="📈 Open Analytics", width="stretch")
+        if analytics_page is not None:
+            st.page_link(analytics_page, label="📈 Open Analytics", width="stretch")
+        else:
+            st.switch_page("pages/analytics.py")
     with cols[3]:
-        st.page_link("pages/prediction_lab.py", label="🎯 Predict Customer", width="stretch")
+        if lab_page is not None:
+            st.page_link(lab_page, label="🎯 Predict Customer", width="stretch")
+        else:
+            st.switch_page("pages/prediction_lab.py")
 
 
 def _footer() -> None:
     """Page footer with version, date, developer, and GitHub link."""
+    today = datetime.now().strftime("%Y-%m-%d")
     st.markdown(
         '<div class="footer">'
         '<div class="footer-title">Customer Churn Analytics Platform</div>'
         '<div class="footer-info">'
-        'v1.0.0 <span>|</span> 2025-07-31 <span>|</span> Abhinav Agnihotri <span>|</span> '
-        '<a href="https://github.com/abhinav7830tech" target="_blank" rel="noopener noreferrer">'
-        'https://github.com/abhinav7830tech'
+        f'v{_APP_VERSION} <span>|</span> {today} <span>|</span> Abhinav Agnihotri <span>|</span> '
+        '<a href="https://github.com/abhinav7830tech/CustomerChurnPrediction" '
+        'target="_blank" rel="noopener noreferrer">'
+        'github.com/abhinav7830tech/CustomerChurnPrediction'
         '</a>'
         '</div>'
         '</div>',
@@ -268,7 +291,6 @@ def main() -> None:
     churn_rate = get_churn_rate(df)
     avg_tenure = get_avg_tenure(df)
     avg_monthly_charges = get_avg_monthly_charges(df)
-    avg_total_charges = get_avg_total_charges(df)
     top_contract, top_contract_pct = get_top_churn_contract(df)
     churned_tenure = get_churned_avg_tenure(df)
     churned_charges = get_churned_avg_monthly_charges(df)
