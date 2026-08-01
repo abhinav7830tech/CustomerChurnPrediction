@@ -16,9 +16,11 @@ lives in `prediction.py` and is unchanged here.
 
 import theme
 
+import hashlib
 import os
 import re
 import sys
+import time
 from datetime import datetime
 
 import matplotlib
@@ -395,27 +397,41 @@ def _form_panel() -> None:
         st.session_state["customer_inputs"] = inputs
         return
 
-    model = prediction.load_model(model_choice)
-    if model is None:
-        st.session_state["validation_errors"] = [
-            "The selected model could not be loaded. Please try another model."
-        ]
-        st.session_state["customer_inputs"] = inputs
-        return
+    with st.status("Running explainability pipeline…", expanded=True) as status:
+        status.update(label="Loading the trained model…", state="running")
+        model = prediction.load_model(model_choice)
+        time.sleep(0.1)
+        if model is None:
+            status.update(label="Model load failed", state="error")
+            st.session_state["validation_errors"] = [
+                "The selected model could not be loaded. Please try another model."
+            ]
+            st.session_state["customer_inputs"] = inputs
+            return
 
-    features = prediction.encode_features(inputs)
-    result = prediction.predict(model, features)
-    result["factors"] = prediction.top_factors(model_choice, features, inputs)
-    result["model_alias"] = model_choice
-    result["model_label"] = prediction.model_info(model_choice)["label"]
-    result["model_accuracy"] = prediction.model_info(model_choice)["accuracy"]
-    result["recommendations"] = prediction.generate_recommendations(
-        result["risk_label"]
-    )
+        status.update(label="Encoding customer features…")
+        features = prediction.encode_features(inputs)
+        time.sleep(0.1)
+
+        status.update(label="Scoring churn probability…")
+        result = prediction.predict(model, features)
+        time.sleep(0.1)
+
+        status.update(label="Computing SHAP contributions…")
+        result["factors"] = prediction.top_factors(model_choice, features, inputs)
+        result["model_alias"] = model_choice
+        result["model_label"] = prediction.model_info(model_choice)["label"]
+        result["model_accuracy"] = prediction.model_info(model_choice)["accuracy"]
+        result["recommendations"] = prediction.generate_recommendations(
+            result["risk_label"]
+        )
+
+        status.update(label="Explanation ready", state="complete", expanded=False)
 
     st.session_state["prediction"] = result
     st.session_state["customer_inputs"] = inputs
     st.session_state["validation_errors"] = None
+    st.toast("Explanation complete", icon="✅")
 
 
 def _validation_card() -> None:
@@ -514,12 +530,8 @@ def _hero(result: dict) -> None:
 
 def _shap_factors(alias: str, features: np.ndarray, inputs: dict):
     """All SHAP contributions for the prediction (or None if unavailable)."""
-    explainer = prediction.get_explainer(alias)
-    if explainer is None:
-        return None, None
-    try:
-        raw = explainer.shap_values(features.reshape(1, -1))[0]
-    except Exception:
+    base, raw = prediction.get_shap_values(alias, features)
+    if raw is None:
         return None, None
     factors = []
     for i, feat in enumerate(prediction.FEATURE_NAMES):
@@ -530,7 +542,7 @@ def _shap_factors(alias: str, features: np.ndarray, inputs: dict):
             "key": feat,
         })
     factors.sort(key=lambda f: abs(f["contribution"]), reverse=True)
-    return explainer, factors
+    return base, factors
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -538,14 +550,10 @@ def _shap_factors(alias: str, features: np.ndarray, inputs: dict):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-def _waterfall_figure(explainer, features: np.ndarray, inputs: dict):
+def _waterfall_figure(base: float, values: np.ndarray, inputs: dict):
     """Actual SHAP waterfall — starts at the base rate, each factor shifts
     the model output until it lands on this customer's prediction."""
-    ev = explainer.expected_value
-    base = float(ev) if np.ndim(ev) == 0 else float(ev[0])
-
-    raw = explainer.shap_values(features.reshape(1, -1))[0]
-    vals = np.asarray([float(v) for v in raw])
+    vals = np.asarray([float(v) for v in values])
     labels = [prediction.FEATURE_LABELS[f] for f in prediction.FEATURE_NAMES]
 
     order = np.argsort(-np.abs(vals))
@@ -604,9 +612,12 @@ def _waterfall_figure(explainer, features: np.ndarray, inputs: dict):
     return fig
 
 
-def _waterfall(explainer, features: np.ndarray, inputs: dict) -> None:
+def _waterfall(alias: str, features: np.ndarray, inputs: dict) -> None:
     with st.container(border=True):
-        st.pyplot(_waterfall_figure(explainer, features, inputs))
+        base, values = prediction.get_shap_values(alias, features)
+        if values is None:
+            return
+        st.pyplot(_waterfall_figure(base, values, inputs))
         st.markdown(
             '<div class="note-text">'
             "Red bars push the prediction <b>toward churn</b>; green bars pull it "
@@ -1133,6 +1144,37 @@ def _build_pdf(result: dict, inputs: dict, all_factors=None) -> bytes:
     return bytes(pdf.output())
 
 
+def _export_signature(result: dict, inputs: dict, all_factors) -> str:
+    """Stable signature for caching generated export bytes per prediction."""
+    factors_str = "|".join(
+        f"{f.get('feature')}:{f.get('contribution', 0.0):.4f}:{f.get('value', '')}"
+        for f in (all_factors or [])
+    )
+    flat = (
+        str(result.get("label")),
+        f"{result.get('probability_pct', 0.0):.4f}",
+        str(result.get("risk_label")),
+        str(result.get("model_alias")),
+        str(sorted((inputs or {}).items())),
+        factors_str,
+    )
+    return hashlib.sha1("|".join(flat).encode("utf-8")).hexdigest()
+
+
+def _cached_export(kind: str, signature: str, factory) -> bytes | None:
+    """Return cached export bytes for this signature, or build and cache them."""
+    key = f"_export_cache_{kind}"
+    cached = st.session_state.get(key)
+    if cached is not None and cached[0] == signature:
+        return cached[1]
+    try:
+        data = factory()
+    except Exception:
+        return None
+    st.session_state[key] = (signature, data)
+    return data
+
+
 def _export_pdf(result: dict, inputs: dict, all_factors) -> None:
     _section_head("11", "📄", "Export to PDF",
                   "Download this decision as a shareable report")
@@ -1147,19 +1189,22 @@ def _export_pdf(result: dict, inputs: dict, all_factors) -> None:
             "</div>",
             unsafe_allow_html=True,
         )
-        try:
-            pdf_bytes = _build_pdf(result, inputs, all_factors)
-        except Exception:
-            pdf_bytes = None
 
+        signature = _export_signature(result, inputs, all_factors)
+        pdf_bytes = _cached_export(
+            "xai_pdf", signature,
+            lambda: _build_pdf(result, inputs, all_factors),
+        )
         if pdf_bytes:
-            theme.download_button(
+            clicked = theme.download_button(
                 "📥 Download PDF Report",
                 data=pdf_bytes,
                 file_name="explainable_ai_report.pdf",
                 mime="application/pdf",
                 key="xai_pdf_download",
             )
+            if clicked:
+                st.toast("PDF report download started", icon="📥")
         else:
             st.markdown(
                 '<div class="error-text">PDF generation is unavailable right '
@@ -1252,7 +1297,7 @@ def main() -> None:
     # ── Shared analysis inputs ──────────────────────────────────────────────
     features_vec = prediction.encode_features(inputs)
     alias = result["model_alias"]
-    explainer, factors = _shap_factors(alias, features_vec, inputs)
+    base, factors = _shap_factors(alias, features_vec, inputs)
 
     # 01 · Prediction Summary
     _section_head("01", "🎯", "Prediction Summary",
@@ -1262,8 +1307,8 @@ def main() -> None:
     # 02 · SHAP Waterfall
     _section_head("02", "📊", "SHAP Waterfall",
                   "How the model moved from the base rate to this customer")
-    if explainer is not None:
-        _waterfall(explainer, features_vec, inputs)
+    if base is not None:
+        _waterfall(alias, features_vec, inputs)
     else:
         with st.container(border=True):
             st.markdown(

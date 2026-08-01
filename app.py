@@ -156,7 +156,7 @@ def _sidebar() -> None:
         st.markdown(
             '<div class="sidebar-section">'
             '<div class="sidebar-label">GitHub</div>'
-            '<div class="sidebar-value muted">github.com/abhinav/placeholder</div>'
+            '<div class="sidebar-value muted">https://github.com/abhinav7830tech</div>'
             '</div>',
             unsafe_allow_html=True,
         )

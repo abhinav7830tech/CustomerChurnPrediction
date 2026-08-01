@@ -600,17 +600,18 @@ def _section_head(num: str, icon: str, title: str, sub: str) -> None:
     st.markdown(theme.section_head(num, icon, title, sub), unsafe_allow_html=True)
 
 
-def _metric_tile(label: str, value: str, sub: str = "", cls: str = "") -> str:
+def _metric_tile(label: str, value: str, sub: str = "", cls: str = "",
+                 icon: str = "", tone: str = "") -> str:
     """KPI metric tile — delegates to the shared design system."""
-    return theme.kpi_card(label, value, subtext=sub, cls=cls)
+    return theme.kpi_card(label, value, subtext=sub, cls=cls, icon=icon, tone=tone)
 
 
 def _kpi_row(metrics: dict, tiles: list) -> None:
     """Render four KPI cards in one row."""
     cols = st.columns(4, gap="medium")
-    for col, (label, value, sub, cls) in zip(cols, tiles):
+    for col, (label, value, sub, cls, icon, tone) in zip(cols, tiles):
         with col:
-            st.markdown(_metric_tile(label, value, sub, cls), unsafe_allow_html=True)
+            st.markdown(_metric_tile(label, value, sub, cls, icon, tone), unsafe_allow_html=True)
 
 
 def _header(metrics: dict) -> None:
@@ -657,31 +658,31 @@ def _executive_kpis(metrics: dict) -> None:
     """Three rows of four KPI cards covering customers, revenue, and model."""
     m = metrics
     _kpi_row(m, [
-        ("Total Customers", f"{m['total']:,}", "Full cleaned dataset", ""),
-        ("Active Customers", f"{m['n_retained']:,}", f"{m['retention_rate']:.1f}% retained", "good"),
-        ("Churned Customers", f"{m['n_churned']:,}", f"{m['churn_rate']:.1f}% of base", "bad"),
-        ("Churn Rate", f"{m['churn_rate']:.1f}%", "Of the total customer base", "accent"),
+        ("Total Customers", f"{m['total']:,}", "Full cleaned dataset", "", "👥", "customers"),
+        ("Active Customers", f"{m['n_retained']:,}", f"{m['retention_rate']:.1f}% retained", "good", "✅", "retention"),
+        ("Churned Customers", f"{m['n_churned']:,}", f"{m['churn_rate']:.1f}% of base", "bad", "🚪", "churn"),
+        ("Churn Rate", f"{m['churn_rate']:.1f}%", "Of the total customer base", "accent", "📉", "churn"),
     ])
 
     _kpi_row(m, [
         ("Monthly Revenue (MRR)", f"${m['mrr_all']/1000:,.1f}K",
-         "Sum of monthly charges", ""),
+         "Sum of monthly charges", "", "💰", "revenue"),
         ("Annual Projection", f"${m['annual_projection']/1e6:,.2f}M",
-         "Estimated · MRR × 12", ""),
-        ("ARPU", f"${m['arpu']:.2f}", "Per-customer average", ""),
+         "Estimated · MRR × 12", "", "📈", "revenue"),
+        ("ARPU", f"${m['arpu']:.2f}", "Per-customer average", "", "💸", "revenue"),
         ("Avg. Customer LTV", f"${m['avg_total_charges']:,.2f}",
-         "Estimated · mean total charges", "accent"),
+         "Estimated · mean total charges", "accent", "🏆", "health"),
     ])
 
     _kpi_row(m, [
         ("Model Accuracy", f"{m['model_accuracy']:.1f}%",
-         f"{m['model_label']} · deployed", "good"),
+         f"{m['model_label']} · deployed", "good", "🎯", "accuracy"),
         ("Best Model", f"{m['model_label']}",
-         f"AUC {m['model_auc']:.4f}", ""),
+         f"AUC {m['model_auc']:.4f}", "", "🧠", "health"),
         ("Retention Rate", f"{m['retention_rate']:.1f}%",
-         "Active ÷ total customers", "good"),
+         "Active ÷ total customers", "good", "🛡️", "retention"),
         ("Average Tenure", f"{m['avg_tenure']:.1f} mo",
-         f"Churned avg {m['avg_tenure_churned']:.1f} mo", ""),
+         f"Churned avg {m['avg_tenure_churned']:.1f} mo", "", "⏳", "retention"),
     ])
 
 
@@ -1348,7 +1349,8 @@ def _build_pdf(m: dict) -> bytes:
         pdf.set_font("Helvetica", "", 8.5)
         for a in actions:
             pdf.cell(4, 4.5, "", new_x=XPos.RIGHT, new_y=YPos.TOP)
-            pdf.multi_cell(0, 4.5, _ascii(f"- {a}"))
+            pdf.multi_cell(0, 4.5, _ascii(f"- {a}"),
+                           new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.multi_cell(0, 4.5, _ascii(f"Outcome: {outcome}  Owner: {owner}"))
         pdf.ln(1)
 
@@ -1400,7 +1402,6 @@ def _build_pptx(m: dict) -> bytes:
             for p in tf.paragraphs:
                 for run in p.runs:
                     run.font.size = Pt(size)
-                    run.font.color.rgb = None
 
     # Title slide
     slide = prs.slides.add_slide(prs.slide_layouts[6])
@@ -1559,13 +1560,15 @@ def _export_section(m: dict) -> None:
     with c1:
         try:
             pdf_bytes = _build_pdf(m)
-            theme.download_button(
+            clicked = theme.download_button(
                 "📄 Download Executive Report (PDF)",
                 data=pdf_bytes,
                 file_name="executive_dashboard_report.pdf",
                 mime="application/pdf",
                 key="exec_pdf_download",
             )
+            if clicked:
+                st.toast("Executive report (PDF) download started", icon="📄")
         except Exception:
             st.markdown(
                 '<div class="note-text">PDF generation is unavailable right now.</div>',
@@ -1574,27 +1577,31 @@ def _export_section(m: dict) -> None:
 
     with c2:
         kpi_csv = _kpi_frame(m).to_csv(index=False).encode("utf-8")
-        theme.download_button(
+        clicked = theme.download_button(
             "📊 Download KPI Dashboard (CSV)",
             data=kpi_csv,
             file_name="executive_kpi_dashboard.csv",
             mime="text/csv",
             key="exec_csv_download",
         )
+        if clicked:
+            st.toast("KPI dashboard (CSV) download started", icon="📊")
 
     with c3:
-        theme.download_button(
+        clicked = theme.download_button(
             "📝 Download Business Summary (TXT)",
             data=_build_summary_text(m).encode("utf-8"),
             file_name="executive_business_summary.txt",
             mime="text/plain",
             key="exec_txt_download",
         )
+        if clicked:
+            st.toast("Business summary (TXT) download started", icon="📝")
 
     with c4:
         try:
             pptx_bytes = _build_pptx(m)
-            theme.download_button(
+            clicked = theme.download_button(
                 "📽️ Download Board Briefing (PPTX)",
                 data=pptx_bytes,
                 file_name="executive_board_briefing.pptx",
@@ -1604,6 +1611,8 @@ def _export_section(m: dict) -> None:
                 ),
                 key="exec_pptx_download",
             )
+            if clicked:
+                st.toast("Board briefing (PPTX) download started", icon="📽️")
         except Exception:
             st.markdown(
                 '<div class="note-text">PPTX generation is unavailable right now.</div>',

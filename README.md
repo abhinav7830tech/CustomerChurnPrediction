@@ -1,240 +1,405 @@
-# Telco Customer Churn Prediction
+<div align="center">
 
-[![Python](https://img.shields.io/badge/Python-3.13%2B-blue)]()
-[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.6%2B-orange)]()
-[![XGBoost](https://img.shields.io/badge/XGBoost-2.1%2B-green)]()
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.28%2B-red)]()
-[![License](https://img.shields.io/badge/License-MIT-yellow)]()
+# 📊 Customer Churn Prediction
 
-Predict customer churn for a telecommunications company using **Random Forest** and **XGBoost** classifiers with SMOTE-balanced training data, SHAP-based model interpretability, and an interactive **Streamlit executive dashboard** for analytics, prediction, and business recommendations.
+### AI-Powered Customer Retention Analytics Platform
+
+Predict customer churn for a telecommunications company using **XGBoost** and **Random Forest** classifiers with SMOTE-balanced training data, explain every prediction with **SHAP**, and act on it through a six-page interactive **Streamlit** executive dashboard with premium **PDF / PPTX / CSV** exports.
+
+[![Python](https://img.shields.io/badge/Python-3.13%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.60-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.6%2B-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
+[![XGBoost](https://img.shields.io/badge/XGBoost-2.1%2B-7FBF3F?style=for-the-badge&logo=xgboost&logoColor=white)](https://xgboost.ai/)
+[![SHAP](https://img.shields.io/badge/SHAP-Explained-8E44AD?style=for-the-badge)](https://shap.readthedocs.io/)
+[![Plotly](https://img.shields.io/badge/Plotly-Interactive-3F4F75?style=for-the-badge&logo=plotly&logoColor=white)](https://plotly.com/)
+[![Status](https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge)](https://github.com/abhinav7830tech/CustomerChurnPrediction)
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
+
+</div>
 
 ---
 
-## Dataset
+## 📑 Table of Contents
 
-**Source:** [IBM Telco Customer Churn Dataset](https://www.kaggle.com/datasets/blastchar/telco-customer-churn)
-
-- **7043** customers, **21** features (demographics, account info, services)
-- Target: `Churn` (Yes/No) — ~27% churn rate
-- Mixed data types: numerical (`tenure`, `MonthlyCharges`, `TotalCharges`) and categorical (`Contract`, `InternetService`, `PaymentMethod`, etc.)
+- [Features](#features)
+- [Dashboard Screenshots](#dashboard-screenshots)
+- [Technology Stack](#technology-stack)
+- [Project Architecture](#project-architecture)
+- [Folder Structure](#folder-structure)
+- [Machine Learning Models](#machine-learning-models)
+- [Dataset Information](#dataset-information)
+- [Installation](#installation)
+- [Requirements](#requirements)
+- [Running Locally](#running-locally)
+- [Streamlit Commands](#streamlit-commands)
+- [Export Features (PDF/PPT)](#export-features-pdfppt)
+- [Future Improvements](#future-improvements)
+- [Developer Information](#developer-information)
+- [GitHub Repository](#github-repository)
+- [License](#license)
 
 ---
 
-## Project Structure
+## ✨ Features
+
+| Page | Highlights |
+|---|---|
+| **🏢 Executive Dashboard** <br/>*(Home)* | Animated KPI cards with count-up counters, live churn-rate insights, model & technology badges, and one-click navigation to every tool. |
+| **📈 Analytics** | Interactive business-intelligence dashboard with **7 real-time filters**, 6 live KPI cards, Plotly visualizations, a sortable data table, and auto-generated insights. |
+| **🔮 AI Prediction Lab** | Single-customer churn prediction with model toggle (**XGBoost / Random Forest**), churn probability gauge, **Low / Medium / High** risk classification, top SHAP drivers, and personalized retention recommendations. |
+| **🧠 Explainable AI** | SHAP **waterfall & factor analysis**, plain-language explanations, **what-if scenario simulation**, feature-importance table, and confidence assessment. |
+| **💼 Business Recommendation Engine** | Rule-based business analysis: customer segmentation (VIP / Premium / Standard / High Risk / Critical), 0–100 business scorecards, **cost–benefit & ROI modeling**, prioritized action briefs, campaign plans, and account-manager notes. |
+| **📋 Executive Dashboard (BI)** | CEO / management overview: health-score gauges, revenue-at-risk, department alerts, prioritized retention roadmap, executive summary, and board-brief notes. |
+
+**Cross-cutting:**
+
+- 🎨 Unified **navy & gold corporate design system** (`theme.py` + `theme.css`) shared across every page
+- 📊 Consistent **dark Plotly template** with smooth transitions and hover tooltips
+- 🚀 **Cached** data loading, model loading, and SHAP explainers for fast, repeatable sessions
+- 📤 One-click **PDF, PPTX, CSV & TXT exports** (see [Export Features](#export-features-pdfppt))
+- 📱 Responsive layout with a collapsible sidebar and mobile-friendly breakpoints
+
+---
+
+## 🖼️ Dashboard Screenshots
+
+| Executive Dashboard (Home) | Analytics |
+|---|---|
+| ![Executive Dashboard](docs/screenshots/home.png) | ![Analytics](docs/screenshots/analytics.png) |
+
+| AI Prediction Lab | Explainable AI |
+|---|---|
+| ![AI Prediction Lab](docs/screenshots/prediction_lab.png) | ![Explainable AI](docs/screenshots/explainable_ai.png) |
+
+| Business Recommendation Engine | Executive Dashboard (BI) |
+|---|---|
+| ![Business Recommendation Engine](docs/screenshots/business_rec.png) | ![Executive Dashboard BI](docs/screenshots/executive_dashboard.png) |
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technology |
+|---|---|
+| **Language** | Python 3.13+ |
+| **Web Framework** | Streamlit (multipage app) |
+| **Visualization** | Plotly, Matplotlib, Seaborn |
+| **Machine Learning** | scikit-learn, XGBoost, imbalanced-learn (SMOTE) |
+| **Interpretability** | SHAP (TreeExplainer) |
+| **Data Handling** | pandas, NumPy |
+| **Model Serialization** | joblib |
+| **Export** | fpdf2 (PDF), python-pptx (PowerPoint), openpyxl |
+| **Notebooks** | Jupyter / IPython |
+
+---
+
+## 🏗️ Project Architecture
+
+```mermaid
+flowchart LR
+    subgraph DATA["Data & Models"]
+        DS[(data/ · IBM Telco CSV)]
+        MOD[(models/ · RF + XGBoost .pkl)]
+    end
+
+    subgraph TRAIN["Training Pipeline (notebooks/)"]
+        NB[churn_analysis.ipynb]
+        PIPE["EDA · Preprocess · SMOTE · Train · Evaluate · SHAP"]
+        NB --> PIPE --> MOD
+    end
+
+    subgraph CORE["Core Services (dashboard/)"]
+        UTL[utils.py · load data & KPIs]
+        PRED[prediction.py · inference · SHAP · recommendations]
+        REP[report.py · PDF builder]
+        PPT[pptx_report.py · deck builder]
+    end
+
+    DS --> UTL
+    MOD --> PRED
+
+    subgraph UI["Streamlit Pages"]
+        APP[dashboard/app.py · Entry]
+        A[Analytics]
+        P[AI Prediction Lab]
+        X[Explainable AI]
+        B[Business Recommendation Engine]
+        E[Executive Dashboard BI]
+    end
+
+    THEME[theme.py + theme.css · Design System]
+
+    APP --> THEME
+    UTL --> APP
+    PRED --> APP
+    APP --> A & P & X & B & E
+    P --> REP & PPT
+    B --> REP & PPT
+
+    subgraph EXPORT["Exports"]
+        REP --> PDF[(PDF)]
+        PPT --> PPTX[(PPTX)]
+        A --> CSV[(CSV)]
+    end
+```
+
+**Flow:** The raw dataset feeds `utils.py` (live KPIs) and the pre-trained models feed `prediction.py` (inference + SHAP + recommendations). Every Streamlit page consumes these shared services plus the `theme.py` design system, and the Prediction Lab / Recommendation Engine can render their results into branded **PDF** and **PowerPoint** deliverables entirely in memory.
+
+---
+
+## 📂 Folder Structure
 
 ```
-.
-├── app.py                                      # Streamlit entry point (Sprint 1 landing page)
-├── data/
-│   └── WA_Fn-UseC_-Telco-Customer-Churn.csv   # Raw dataset
-├── models/
-│   ├── random_forest_model.pkl                 # Trained Random Forest
-│   └── xgboost_model.pkl                       # Trained XGBoost
-├── notebooks/
-│   └── churn_analysis.ipynb                    # Full analysis pipeline
-├── outputs/
-│   ├── churn_distribution.png
-│   ├── numerical_distributions.png
-│   ├── contract_vs_churn.png
-│   ├── correlation_heatmap.png
-│   ├── roc_curve.png
-│   ├── confusion_matrix.png
-│   ├── shap_bar.png
-│   └── shap_beeswarm.png
-├── dashboard/
-│   ├── app.py                                  # Executive dashboard (Sprint 2, live KPIs)
-│   ├── utils.py                                # Data loading & KPI calculations
-│   ├── prediction.py                           # Model inference, SHAP & recommendations
+CustomerChurnPrediction/
+├── app.py                                  # Legacy Sprint-1 landing page (kept for reference)
+├── dashboard/                              # ⭐ Main Streamlit application
+│   ├── app.py                              # Entry point — Executive Dashboard (Home)
+│   ├── theme.py                            # Design system — tokens, CSS, Plotly template, widgets
+│   ├── theme.css                           # Shared stylesheet (navy/gold corporate theme)
+│   ├── utils.py                            # Data loading, cleaning & KPI calculators
+│   ├── prediction.py                       # Model loading, inference, SHAP factors, recommendations
+│   ├── report.py                           # Premium PDF report builder (fpdf2)
+│   ├── pptx_report.py                      # Executive PowerPoint builder (python-pptx)
 │   └── pages/
-│       ├── analytics.py                        # Sprint 3 — interactive Plotly analytics
-│       ├── executive_dashboard.py              # CEO/management business intelligence
-│       ├── prediction_lab.py                   # Single-customer churn prediction
-│       ├── Explainable_AI.py                   # SHAP-based decision reports (PDF export)
-│       └── 💼_Business_Recommendation_Engine.py  # Rule-based action briefs (PDF export)
+│       ├── analytics.py                    # Interactive BI dashboard (7 filters + CSV export)
+│       ├── prediction_lab.py               # Single-customer AI prediction (PDF / PPTX export)
+│       ├── Explainable_AI.py               # SHAP decision reports + what-if analysis (PDF)
+│       ├── 💼_Business_Recommendation_Engine.py  # Rule-based action briefs (PDF / PPTX)
+│       └── executive_dashboard.py          # CEO / management BI overview (PDF / PPTX / TXT)
+├── models/                                 # Pre-trained pickled models
+│   ├── random_forest_model.pkl
+│   └── xgboost_model.pkl
+├── notebooks/
+│   └── churn_analysis.ipynb                # Full EDA → train → evaluate → SHAP pipeline
+├── outputs/                                # EDA & model evaluation plots (PNG)
+├── data/
+│   └── WA_Fn-UseC_-Telco-Customer-Churn.csv  # Raw dataset
+├── docs/
+│   └── screenshots/                        # Dashboard screenshots used in this README
 ├── requirements.txt
+├── LICENSE
 └── README.md
 ```
 
 ---
 
-## Setup
+## 🤖 Machine Learning Models
+
+Two gradient-boosted tree models were trained on SMOTE-balanced data and compared on a held-out **20% test set**:
+
+| Model | Accuracy | AUC-ROC | Precision | Recall | F1-Score |
+|---|---|---|---|---|---|
+| **Random Forest** | 75.98% | **0.8163** | 0.5423 | **0.6176** | **0.5775** |
+| **XGBoost** | **76.12%** | 0.8133 | **0.5461** | 0.6016 | 0.5725 |
+
+> **XGBoost** is the default deployed model (best accuracy); **Random Forest** edges ahead on AUC-ROC, recall, and F1.
+
+### Hyperparameters
+
+| Model | Key Parameters |
+|---|---|
+| **Random Forest** | `n_estimators=200`, `max_depth=15`, `min_samples_split=5`, `min_samples_leaf=2`, `max_features='sqrt'` |
+| **XGBoost** | `n_estimators=100`, `max_depth=6`, `learning_rate=0.1`, `subsample=0.8`, `colsample_bytree=0.8` |
+
+### Training Pipeline
+
+1. **Clean** — drop `customerID`; coerce `TotalCharges` to numeric; drop 11 rows with nulls.
+2. **Encode** — label-encode all categorical features.
+3. **Split** — stratified **80 / 20** train–test split (5,625 train / 1,407 test).
+4. **Balance** — apply **SMOTE** oversampling to the training set (4,130 samples per class).
+5. **Train & Tune** — train Random Forest and XGBoost with tuned hyperparameters.
+6. **Evaluate** — accuracy, precision, recall, F1, confusion matrix, ROC-AUC.
+7. **Explain** — SHAP `TreeExplainer` for global and per-customer feature attribution.
+8. **Export** — serialize both models with `joblib` into `models/`.
+
+### Interpretability (SHAP)
+
+The dashboard surfaces the **top-5 SHAP factors** behind every single-customer prediction:
+
+- 📉 **Low tenure** → higher churn probability
+- 📝 **Month-to-month contracts** → higher churn probability
+- 💳 **Higher MonthlyCharges** → higher churn probability
+- 🌐 **Fiber optic InternetService** → higher churn probability
+- 💰 **TotalCharges** — strong proxy for customer lifetime value
+
+---
+
+## 📊 Dataset Information
+
+**Source:** [IBM Telco Customer Churn Dataset](https://www.kaggle.com/datasets/blastchar/telco-customer-churn) (Kaggle)
+
+| Attribute | Details |
+|---|---|
+| **Records** | 7,043 customers |
+| **Features** | 21 (demographics, services, account & billing) |
+| **Target** | `Churn` (Yes / No) — ~27% churn rate |
+| **Types** | Mixed — numeric & categorical |
+
+**Feature groups:**
+
+- 👤 **Demographics:** `gender`, `SeniorCitizen`, `Partner`, `Dependents`, `tenure`
+- 📡 **Services:** `PhoneService`, `MultipleLines`, `InternetService`, `OnlineSecurity`, `OnlineBackup`, `DeviceProtection`, `TechSupport`, `StreamingTV`, `StreamingMovies`
+- 📇 **Account:** `Contract`, `PaperlessBilling`, `PaymentMethod`
+- 💳 **Billing:** `MonthlyCharges`, `TotalCharges`
+
+---
+
+## 🚀 Installation
 
 ```bash
-# Clone & enter the project
+# 1. Clone the repository
+git clone https://github.com/abhinav7830tech/CustomerChurnPrediction.git
 cd CustomerChurnPrediction
 
-# Create virtual environment
+# 2. Create & activate a virtual environment
 python3 -m venv venv
-source venv/bin/activate
+source venv/bin/activate        # Windows: venv\Scripts\activate
 
-# Install dependencies
+# 3. Install dependencies
 pip install -r requirements.txt
 ```
 
 ---
 
-## Usage
+## 📦 Requirements
 
-### Streamlit Dashboard
+All dependencies are pinned loosely in [`requirements.txt`](requirements.txt):
 
-Launch the interactive dashboard:
+| Library | Purpose |
+|---|---|
+| `streamlit` | Web application framework (multipage UI) |
+| `plotly` | Interactive BI visualizations |
+| `pandas`, `numpy` | Data manipulation & numerical computing |
+| `matplotlib`, `seaborn` | Static EDA visualizations |
+| `scikit-learn` | Preprocessing, Random Forest, metrics |
+| `xgboost` | Gradient-boosted classifier |
+| `imbalanced-learn` | SMOTE oversampling |
+| `shap` | Model interpretability |
+| `joblib` | Model serialization |
+| `fpdf2` | PDF report export |
+| `python-pptx` | PowerPoint deck export |
+| `openpyxl` | Excel utilities |
+| `jupyter`, `ipykernel` | Analysis notebooks |
+
+---
+
+## ▶️ Running Locally
 
 ```bash
+# From the project root, launch the dashboard
 streamlit run dashboard/app.py
 ```
 
-Available views:
+Open the browser to **http://localhost:8501** — the **Executive Dashboard** loads first, with all five additional tools available from the sidebar.
 
-| Page | Description |
-|---|---|
-| **Executive Dashboard** | Animated KPIs and key churn insights computed live from the dataset |
-| **Analytics** | Interactive BI dashboard with Plotly visualizations and real-time filters |
-| **Prediction Lab** | Single-customer churn prediction with risk level and top drivers |
-| **Explainable AI** | SHAP-based decision reports with what-if analysis and PDF export |
-| **Business Recommendation Engine** | Rule-based retention action briefs with cost/benefit estimates and PDF export |
+> ⚠️ Run the app from the **project root** (`CustomerChurnPrediction/`) so the `data/` and `models/` paths resolve correctly.
 
-### Jupyter Notebook
-
-Run the analysis pipeline end-to-end:
+### Optional — run the analysis notebook
 
 ```bash
 jupyter notebook notebooks/churn_analysis.ipynb
 ```
 
-The notebook covers: data loading → EDA → preprocessing → SMOTE balancing → model training → evaluation → SHAP interpretation → model export.
+The notebook walks the full pipeline: data loading → EDA → preprocessing → SMOTE balancing → model training → evaluation → SHAP interpretation → model export.
 
 ---
 
-## Exploratory Data Analysis
+## 🖥️ Streamlit Commands
 
-### Churn Distribution
+```bash
+# Standard launch
+streamlit run dashboard/app.py
 
-![Churn Distribution](outputs/churn_distribution.png)
+# Launch on a custom port
+streamlit run dashboard/app.py --server.port 8602
 
-~27% of customers have churned — a **class-imbalanced** dataset.
+# Expose on your network (e.g. for local LAN access)
+streamlit run dashboard/app.py --server.address 0.0.0.0
 
-### Numerical Feature Distributions
+# Headless mode (no browser auto-open) — handy for servers
+streamlit run dashboard/app.py --server.headless true
 
-![Numerical Distributions](outputs/numerical_distributions.png)
+# Stop the running server
+#   Press Ctrl+C in the terminal
 
-- **Tenure:** Churned customers have shorter tenure; loyal customers stay longer.
-- **Monthly Charges:** Churned customers tend to have higher monthly charges.
-- **Total Charges:** Churned customers have lower total charges (shorter tenure).
+# Clear cached data / models (after updating a dataset or model)
+streamlit run dashboard/app.py --server.enableStaticServing false
+```
 
-### Contract Type vs Churn
+**Common flag reference:**
 
-![Contract vs Churn](outputs/contract_vs_churn.png)
-
-Month-to-month contracts show the highest churn; two-year contracts retain customers best.
-
-### Correlation Heatmap
-
-![Correlation Heatmap](outputs/correlation_heatmap.png)
-
-`tenure` and `TotalCharges` are strongly correlated; `MonthlyCharges` has moderate correlation with churn.
-
----
-
-## Methodology
-
-### Preprocessing
-- Drop `customerID` (non-predictive)
-- Convert `TotalCharges` to numeric; drop 11 rows with missing values
-- Label-encode all categorical features
-- **80/20 stratified train-test split** (5,625 train / 1,407 test)
-
-### Class Imbalance Handling
-**SMOTE** (Synthetic Minority Oversampling) applied to training data, producing a balanced set of 4,130 samples per class.
-
-### Models
-
-| Model | Hyperparameters |
+| Flag | Purpose |
 |---|---|
-| **Random Forest** | `n_estimators=200`, `max_depth=15`, `min_samples_split=5`, `min_samples_leaf=2`, `max_features='sqrt'` |
-| **XGBoost** | `n_estimators=100`, `max_depth=6`, `learning_rate=0.1`, `subsample=0.8`, `colsample_bytree=0.8` |
+| `--server.port` | Change the port (default `8501`) |
+| `--server.address` | Bind address (default `localhost`) |
+| `--server.headless true` | Run without auto-opening a browser |
+| `--browser.gatherUsageStats false` | Disable usage statistics |
 
 ---
 
-## Results
+## 📤 Export Features (PDF/PPT)
 
-### Performance Comparison
+Every report is generated **in memory** and delivered as a branded, downloadable file — styled to match the navy & gold dashboard theme.
 
-| Metric | Random Forest | XGBoost |
+| Page | Exports | Format |
 |---|---|---|
-| **Accuracy** | 75.98% | **76.12%** |
-| **AUC-ROC** | **0.8163** | 0.8133 |
-| **Precision** | 0.5423 | **0.5461** |
-| **Recall** | **0.6176** | 0.6016 |
-| **F1-Score** | **0.5775** | 0.5725 |
+| **Analytics** | Filtered dataset | 📄 **CSV** |
+| **AI Prediction Lab** | Executive customer retention report | 📄 **PDF** · 🖥️ **PPTX** |
+| **Explainable AI** | SHAP decision report | 📄 **PDF** |
+| **Business Recommendation Engine** | Executive report + action briefs | 📄 **PDF** · 🖥️ **PPTX** |
+| **Executive Dashboard (BI)** | Board report + deck + summary | 📄 **PDF** · 🖥️ **PPTX** · 📝 **TXT** |
 
-Both models perform similarly. XGBoost edges ahead on accuracy, while Random Forest leads on AUC-ROC, recall, and F1.
+**What's inside the PDF/PPTX deliverables:**
 
-### ROC Curves
+- Dedicated **cover page** with brand header, verdict, and metadata
+- **Executive summary** — prediction, risk level, probability, revenue at risk & CLV
+- **Customer details** — full profile used for the prediction
+- **KPI summary** — probability, risk, priority, segment, cost–benefit & ROI
+- **Business recommendations** — prioritized actions with rationale, impact & cost
+- **Conclusion & next steps** with account-manager notes
 
-![ROC Curve](outputs/roc_curve.png)
-
-AUC-ROC scores of ~0.81 indicate solid discriminative ability — both models effectively separate churners from non-churners.
-
-### Confusion Matrix (XGBoost)
-
-![Confusion Matrix](outputs/confusion_matrix.png)
-
-The model correctly identifies most non-churning customers but produces a notable number of false positives for the churn class.
-
-### Classification Reports
-
-```
-Random Forest (Tuned):
-              precision    recall  f1-score
-       0       0.85      0.81      0.83
-       1       0.54      0.62      0.58
-
-XGBoost:
-              precision    recall  f1-score
-       0       0.85      0.82      0.83
-       1       0.55      0.60      0.57
-```
+> Exports never recompute or alter any prediction, SHAP, or business metric — they only format existing results for print.
 
 ---
 
-## Model Interpretation (SHAP)
+## 🔮 Future Improvements
 
-### Feature Importance
-
-![SHAP Bar Chart](outputs/shap_bar.png)
-
-The top-5 most influential features: **tenure**, **Contract**, **TotalCharges**, **MonthlyCharges**, and **InternetService**.
-
-### Impact on Prediction
-
-![SHAP Beeswarm](outputs/shap_beeswarm.png)
-
-- **Low tenure** → higher churn probability
-- **Month-to-month contracts** → higher churn probability
-- **Higher MonthlyCharges** → higher churn probability
-- **Fiber optic InternetService** → higher churn probability
+- 🔬 **Hyperparameter optimization** (Optuna) and model ensemble / stacking
+- 🌐 **Deployment** to Streamlit Community Cloud / Docker with CI/CD
+- 🗄️ **Live data source** — Postgres / API integration instead of a static CSV
+- ⏰ **Batch churn scoring** and scheduled PDF/PPTX distribution
+- 🧪 **A/B testing** of retention offers and campaign ROI tracking
+- 📈 **Model drift monitoring** with an automated retraining pipeline
+- 🔐 **Authentication & role-based access** (analyst / manager / executive)
+- ✅ **Automated test suite** (unit + UI) and code-quality gates
 
 ---
 
-## Technologies
+## 👤 Developer Information
 
-| Library | Purpose |
-|---|---|
-| pandas, numpy | Data manipulation |
-| matplotlib, seaborn | Visualization |
-| scikit-learn | Preprocessing, RF, metrics |
-| XGBoost | Gradient boosting classifier |
-| imbalanced-learn | SMOTE oversampling |
-| SHAP | Model interpretability |
-| joblib | Model serialization |
-| Jupyter | Interactive notebook |
-| Streamlit | Web dashboard framework |
-| Plotly | Interactive BI visualizations |
-| fpdf2 | PDF report export |
-| python-pptx, openpyxl | Export utilities |
+**Abhinav Agnihotri** — Data Science & Machine Learning
+
+- 🧑‍💻 **GitHub:** [abhinav7830tech](https://github.com/abhinav7830tech)
+- 📌 **Role:** Data Scientist / ML Engineer (College Project — Sprint 2)
+
+Built as a full-stack data science project: end-to-end ML pipeline (EDA → training → interpretation) wrapped in a production-grade executive dashboard.
 
 ---
 
-## License
+## 🔗 GitHub Repository
 
-MIT
+- 📂 **Repository:** [github.com/abhinav7830tech/CustomerChurnPrediction](https://github.com/abhinav7830tech/CustomerChurnPrediction)
+- ⭐ Found it useful? Give it a **star**!
+- 🍴 Want to contribute? Feel free to **fork** and open a **pull request**.
+
+---
+
+## 📄 License
+
+Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more information.
+
+---
+
+<div align="center">
+  <sub>Built with ❤️ using Streamlit · Plotly · scikit-learn · XGBoost · SHAP</sub>
+</div>

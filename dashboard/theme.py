@@ -28,6 +28,7 @@ COLORS = {
     "surface": "#163949",
     "card": "#234556",
     "card_bottom": "#1f3d4d",
+    "plot": "#0B2A38",
     "text": "#F4F2EE",
     "sub": "#D6D8D8",
     "gold": "#C8A96B",
@@ -37,10 +38,24 @@ COLORS = {
     "teal": "#9BCEC1",
     "red": "#D97C7C",
     "red_bright": "#E0635A",
+    "blue": "#6EA8FE",
+    "green": "#5FCE8B",
+    "emerald": "#3FD6C0",
+    "purple": "#A78BFA",
     "border": "rgba(255,255,255,0.08)",
     "border_strong": "rgba(255,255,255,0.12)",
     "border_gold": "rgba(200,169,107,0.35)",
     "grid": "rgba(255,255,255,0.05)",
+}
+
+# Per-metric accent tones for KPI cards (kept in sync with theme.css).
+KPI_TONES = {
+    "customers": COLORS["blue"],
+    "revenue": COLORS["green"],
+    "retention": COLORS["emerald"],
+    "churn": COLORS["red_bright"],
+    "accuracy": COLORS["purple"],
+    "health": COLORS["gold"],
 }
 
 # Mirrors the `:root` block in theme.css so Python components and the
@@ -50,31 +65,31 @@ CSS_VARS = COLORS
 FONT = "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
 
 TYPOGRAPHY = {
-    "hero": "2.6rem",
-    "hero_laptop": "2.2rem",
+    "hero": "2.75rem",
+    "hero_laptop": "2.3rem",
     "hero_desktop": "3rem",
-    "hero_mobile": "1.6rem",
+    "hero_mobile": "1.7rem",
     "kicker": "0.72rem",
-    "section_title": "1.15rem",
-    "card_title": "0.8rem",
-    "body": "0.9rem",
+    "section_title": "1.55rem",
+    "card_title": "0.85rem",
+    "body": "0.92rem",
     "caption": "0.8rem",
-    "meta": "0.7rem",
+    "meta": "0.72rem",
 }
 
 SPACING = {
-    "section": "2rem 0 1rem",
-    "page_header": "2rem",
-    "card_padding": "1.5rem",
-    "block_pad": "1.5rem 3rem 2rem",
-    "grid_gap": "1rem",
+    "section": "2.75rem 0 1.25rem",
+    "page_header": "2.25rem",
+    "card_padding": "1.6rem",
+    "block_pad": "1.75rem 3rem 2.25rem",
+    "grid_gap": "1.1rem",
 }
 
-RADIUS = {"outer": "16px", "inner": "12px", "pill": "100px"}
+RADIUS = {"outer": "20px", "inner": "14px", "pill": "100px"}
 
 SHADOW = {
     "card": "0 2px 12px rgba(0,0,0,0.18)",
-    "hover": "0 10px 26px rgba(0,0,0,0.28)",
+    "hover": "0 14px 32px rgba(0,0,0,0.32)",
 }
 
 TRANSITION = "all 0.25s ease"
@@ -110,6 +125,19 @@ STATUS_COLORS = {
 }
 
 CHURN_COLORS = [COLORS["sage"], COLORS["gold"], COLORS["teal"], COLORS["sub"]]
+
+# Default trace sequence for charts that rely on Plotly's colorway.
+PALETTE_SEQUENCE = [
+    COLORS["sage"],
+    COLORS["gold"],
+    COLORS["teal"],
+    COLORS["blue"],
+    COLORS["purple"],
+    COLORS["green"],
+    COLORS["emerald"],
+    COLORS["red"],
+    COLORS["sub"],
+]
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # SHARED STYLESHEET
@@ -172,13 +200,23 @@ def kpi_card(
     data_value: float | None = None,
     data_format: str = "number",
     data_suffix: str = "",
+    icon: str = "",
+    tone: str = "",
 ) -> str:
-    """HTML for a KPI metric card (optionally animated + count-up)."""
+    """HTML for a KPI metric card (optionally animated + count-up).
+
+    `icon` renders a small glyph in the top-right corner; `tone` selects a
+    per-metric accent color (blue/green/emerald/red/purple/gold) used for the
+    card's accent border and glow.
+    """
     val_class = "kpi-value"
     if accent:
         val_class += " accent"
     if cls:
         val_class += f" {cls}"
+    card_class = "kpi-card"
+    if tone:
+        card_class += f" kpi-tone-{tone}"
     style = f' style="animation-delay:{delay}s"' if delay is not None else ""
     data_attrs = ""
     if data_value is not None:
@@ -186,9 +224,11 @@ def kpi_card(
             f' data-value="{data_value}" data-format="{data_format}"'
             f' data-suffix="{data_suffix}"'
         )
+    icon_html = f'<div class="kpi-icon">{icon}</div>' if icon else ""
     subtext_html = f'<div class="kpi-subtext">{subtext}</div>' if subtext else ""
     return (
-        f'<div class="kpi-card"{style}>'
+        f'<div class="{card_class}"{style}>'
+        f"{icon_html}"
         f'<div class="kpi-label">{title}</div>'
         f'<div class="{val_class}"{data_attrs}>{value}</div>'
         f"{subtext_html}"
@@ -247,12 +287,17 @@ def note(text: str) -> str:
 def figure_container(title: str, desc: str) -> None:
     """Render the title + description above a Plotly figure."""
     st.markdown(
-        f'<div class="chart-title" style="font-size:0.85rem;font-weight:600;'
-        f'color:#F4F2EE;margin-bottom:0.15rem;">{title}</div>'
-        f'<div class="chart-desc" style="font-size:0.7rem;color:#D6D8D8;'
-        f'margin-bottom:0.6rem;opacity:0.72;">{desc}</div>',
+        f'<div class="chart-title">{title}</div>'
+        f'<div class="chart-desc">{desc}</div>',
         unsafe_allow_html=True,
     )
+
+
+def chart_card(title: str, desc: str, fig: go.Figure) -> None:
+    """Render a Plotly figure inside a polished rounded card container."""
+    with st.container(border=True):
+        figure_container(title, desc)
+        st.plotly_chart(fig, width="stretch")
 
 
 def page_header(
@@ -323,8 +368,11 @@ def download_button(
     file_name: str,
     mime: str,
     key: str | None = None,
-) -> None:
-    """Consistent gold download button (full width) for CSV/PDF/TXT/PPTX exports."""
+) -> bool:
+    """Consistent gold download button (full width) for CSV/PDF/TXT/PPTX exports.
+
+    Returns whether the button was just clicked so callers can show a toast.
+    """
     kwargs = {
         "label": label,
         "data": data,
@@ -334,7 +382,7 @@ def download_button(
     }
     if key is not None:
         kwargs["key"] = key
-    st.download_button(**kwargs)
+    return bool(st.download_button(**kwargs))
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -346,36 +394,49 @@ def dark_template() -> go.layout.Template:
     """Corporate dark theme for all Plotly charts."""
     return go.layout.Template(
         layout=dict(
-            font=dict(family=FONT, size=12, color=COLORS["sub"]),
-            title=dict(font=dict(size=15, color=COLORS["text"]), x=0.5),
-            paper_bgcolor=COLORS["card"],
-            plot_bgcolor=COLORS["card"],
-            height=400,
-            margin=dict(l=50, r=30, t=65, b=50),
+            font=dict(family=FONT, size=13, color=COLORS["sub"]),
+            title=dict(
+                font=dict(size=18, color=COLORS["text"], family=FONT),
+                x=0.5,
+                xanchor="center",
+            ),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor=COLORS["plot"],
+            height=420,
+            autosize=True,
+            transition=dict(duration=350, easing="cubic-in-out"),
+            margin=dict(l=64, r=42, t=88, b=64),
             xaxis=dict(
-                gridcolor=COLORS["grid"],
-                zerolinecolor=COLORS["grid"],
-                tickfont=dict(size=11, color=COLORS["sub"]),
-                title=dict(font=dict(size=12, color=COLORS["sub"])),
+                gridcolor="rgba(255,255,255,0.06)",
+                zerolinecolor="rgba(255,255,255,0.10)",
+                linecolor="rgba(255,255,255,0.12)",
+                tickfont=dict(size=12, color=COLORS["sub"]),
+                title=dict(font=dict(size=13, color=COLORS["sub"])),
+                ticks="outside",
             ),
             yaxis=dict(
-                gridcolor=COLORS["grid"],
-                zerolinecolor=COLORS["grid"],
-                tickfont=dict(size=11, color=COLORS["sub"]),
-                title=dict(font=dict(size=12, color=COLORS["sub"])),
+                gridcolor="rgba(255,255,255,0.06)",
+                zerolinecolor="rgba(255,255,255,0.10)",
+                linecolor="rgba(255,255,255,0.12)",
+                tickfont=dict(size=12, color=COLORS["sub"]),
+                title=dict(font=dict(size=13, color=COLORS["sub"])),
             ),
             legend=dict(
-                font=dict(size=11, color=COLORS["sub"]),
+                font=dict(size=12, color=COLORS["sub"]),
                 bgcolor="rgba(0,0,0,0)",
                 orientation="h",
-                y=1.12,
+                x=0.5,
+                xanchor="center",
+                y=1.14,
             ),
             hoverlabel=dict(
-                bgcolor=COLORS["card"],
+                bgcolor=COLORS["surface"],
                 font_color=COLORS["text"],
-                font_size=12,
+                font_size=13,
+                font_family=FONT,
+                bordercolor=COLORS["border_strong"],
             ),
-            colorway=CHURN_COLORS,
+            colorway=PALETTE_SEQUENCE,
         )
     )
 
@@ -392,9 +453,9 @@ def gauge_figure(
     value: float,
     color: str,
     title: str,
-    height: int = 260,
-    number_size: int = 30,
-    title_size: int = 13,
+    height: int = 280,
+    number_size: int = 34,
+    title_size: int = 15,
 ) -> go.Figure:
     """Plotly gauge for a single 0-100 business score."""
     fig = go.Figure(go.Indicator(
@@ -407,22 +468,23 @@ def gauge_figure(
             "axis": {
                 "range": [0, 100],
                 "tickcolor": COLORS["sub"],
-                "tickfont": {"color": COLORS["sub"], "size": 9},
+                "tickfont": {"color": COLORS["sub"], "size": 10},
             },
-            "bar": {"color": color, "thickness": 0.3},
+            "bar": {"color": color, "thickness": 0.32},
             "bgcolor": "rgba(0,0,0,0)",
             "borderwidth": 0,
             "steps": [
-                {"range": [0, 40], "color": "rgba(217,124,124,0.18)"},
-                {"range": [40, 70], "color": "rgba(200,169,107,0.22)"},
-                {"range": [70, 100], "color": "rgba(143,162,138,0.26)"},
+                {"range": [0, 40], "color": "rgba(217,124,124,0.16)"},
+                {"range": [40, 70], "color": "rgba(200,169,107,0.20)"},
+                {"range": [70, 100], "color": "rgba(143,162,138,0.24)"},
             ],
         },
     ))
     fig.update_layout(
         height=height,
-        margin=dict(t=50, b=10, l=15, r=15),
+        margin=dict(t=58, b=12, l=20, r=20),
         paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
         font={"family": FONT},
     )
     return fig

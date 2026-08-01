@@ -10,8 +10,10 @@ logic lives in `prediction.py` and is unchanged here.
 
 import theme
 
+import hashlib
 import os
 import sys
+import time
 
 import streamlit as st
 
@@ -22,6 +24,22 @@ except ModuleNotFoundError:
     if _dashboard_dir not in sys.path:
         sys.path.insert(0, _dashboard_dir)
     import prediction
+
+try:
+    import report
+except ModuleNotFoundError:
+    _dashboard_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if _dashboard_dir not in sys.path:
+        sys.path.insert(0, _dashboard_dir)
+    import report
+
+try:
+    import pptx_report
+except ModuleNotFoundError:
+    _dashboard_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if _dashboard_dir not in sys.path:
+        sys.path.insert(0, _dashboard_dir)
+    import pptx_report
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # PAGE CONFIG
@@ -234,7 +252,7 @@ def _form_panel() -> None:
             )
 
         submitted = st.form_submit_button(
-            "🔮 Predict Customer Churn", use_container_width=True
+            "🔮 Predict Customer Churn", width="stretch"
         )
 
     if not submitted:
@@ -269,28 +287,42 @@ def _form_panel() -> None:
         st.session_state["customer_inputs"] = inputs
         return
 
-    model = prediction.load_model(model_choice)
-    if model is None:
-        st.session_state["prediction"] = None
-        st.session_state["validation_errors"] = [
-            "The selected model could not be loaded. Please try another model."
-        ]
-        st.session_state["customer_inputs"] = inputs
-        return
+    with st.status("Running churn prediction…", expanded=True) as status:
+        status.update(label="Loading the trained model…", state="running")
+        model = prediction.load_model(model_choice)
+        time.sleep(0.1)
+        if model is None:
+            status.update(label="Model load failed", state="error")
+            st.session_state["prediction"] = None
+            st.session_state["validation_errors"] = [
+                "The selected model could not be loaded. Please try another model."
+            ]
+            st.session_state["customer_inputs"] = inputs
+            return
 
-    features = prediction.encode_features(inputs)
-    result = prediction.predict(model, features)
-    result["factors"] = prediction.top_factors(model_choice, features, inputs)
-    result["model_alias"] = model_choice
-    result["model_label"] = prediction.model_info(model_choice)["label"]
-    result["model_accuracy"] = prediction.model_info(model_choice)["accuracy"]
-    result["recommendations"] = prediction.generate_recommendations(
-        result["risk_label"]
-    )
+        status.update(label="Encoding customer features…")
+        features = prediction.encode_features(inputs)
+        time.sleep(0.1)
+
+        status.update(label="Scoring churn probability…")
+        result = prediction.predict(model, features)
+        time.sleep(0.1)
+
+        status.update(label="Explaining the model decision…")
+        result["factors"] = prediction.top_factors(model_choice, features, inputs)
+        result["model_alias"] = model_choice
+        result["model_label"] = prediction.model_info(model_choice)["label"]
+        result["model_accuracy"] = prediction.model_info(model_choice)["accuracy"]
+        result["recommendations"] = prediction.generate_recommendations(
+            result["risk_label"]
+        )
+
+        status.update(label="Prediction ready", state="complete", expanded=False)
 
     st.session_state["prediction"] = result
     st.session_state["customer_inputs"] = inputs
     st.session_state["validation_errors"] = None
+    st.toast("Prediction complete", icon="✅")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -302,10 +334,31 @@ def _waiting_card() -> None:
     st.markdown(
         '<div class="waiting-card">'
         '<div class="waiting-icon">🔮</div>'
-        '<div class="waiting-title">Waiting for prediction...</div>'
+        '<div class="waiting-title">Waiting for a prediction</div>'
         '<div class="waiting-text">'
-        "Fill in the customer details on the left and click "
-        "<b>Predict Customer Churn</b> to see the result."
+        "Complete the customer profile on the left and click "
+        "<b>Predict Customer Churn</b> to reveal the model's verdict."
+        "</div>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="card" style="animation-delay:0.12s">'
+        '<div class="card-title">How it works</div>'
+        '<div class="card-sub">Three quick steps to an executive verdict</div>'
+        '<div class="summary-grid" style="grid-template-columns:repeat(3,1fr)">'
+        '<div class="summary-card"><div class="summary-card-title">'
+        '<span class="summary-icon">1️⃣</span>Fill profile</div>'
+        '<div class="summary-pairs"><div class="summary-item">'
+        '<div class="summary-label">Personal, account, services, and billing</div></div></div></div>'
+        '<div class="summary-card"><div class="summary-card-title">'
+        '<span class="summary-icon">2️⃣</span>Run prediction</div>'
+        '<div class="summary-pairs"><div class="summary-item">'
+        '<div class="summary-label">The deployed model scores the account</div></div></div></div>'
+        '<div class="summary-card"><div class="summary-card-title">'
+        '<span class="summary-icon">3️⃣</span>Review & export</div>'
+        '<div class="summary-pairs"><div class="summary-item">'
+        '<div class="summary-label">Inspect factors, then export PDF or PPTX</div></div></div></div>'
         "</div>"
         "</div>",
         unsafe_allow_html=True,
@@ -539,6 +592,99 @@ def _validation_card() -> None:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# EXPORT TO PDF
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+def _export_signature(result: dict, inputs: dict) -> str:
+    """Stable signature for caching generated export bytes per prediction."""
+    flat = (
+        str(result.get("label")),
+        f"{result.get('probability_pct', 0.0):.4f}",
+        str(result.get("risk_label")),
+        str(result.get("model_alias")),
+        str(sorted((inputs or {}).items())),
+    )
+    return hashlib.sha1("|".join(flat).encode("utf-8")).hexdigest()
+
+
+def _cached_export(kind: str, signature: str, factory) -> bytes | None:
+    """Return cached export bytes for this signature, or build and cache them."""
+    key = f"_export_cache_{kind}"
+    cached = st.session_state.get(key)
+    if cached is not None and cached[0] == signature:
+        return cached[1]
+    try:
+        data = factory()
+    except Exception:
+        return None
+    st.session_state[key] = (signature, data)
+    return data
+
+
+def _export_pdf(result: dict, inputs: dict) -> None:
+    """Premium executive PDF / PPTX downloads built entirely in memory."""
+    st.markdown(
+        '<div class="card" style="animation-delay:0.25s">'
+        '<div class="card-title">📄 Export</div>'
+        '<div class="card-sub">Download a premium executive report (PDF) or '
+        "presentation-ready deck (PPTX) for this prediction - cover page, "
+        "executive summary, prediction overview, customer details, risk "
+        "assessment, KPI summary, and recommendations."
+        "</div>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+    signature = _export_signature(result, inputs)
+    conf_label, _conf_color = _confidence(result.get("probability_pct", 0.0))
+    analysis = {"confidence": conf_label}
+
+    pdf_bytes = _cached_export(
+        "lab_pdf", signature,
+        lambda: report.build_report(result, inputs, analysis),
+    )
+    if pdf_bytes:
+        clicked = theme.download_button(
+            "📥 Download Executive Report (PDF)",
+            data=pdf_bytes,
+            file_name="customer_churn_executive_report.pdf",
+            mime="application/pdf",
+            key="prediction_lab_pdf_download",
+        )
+        if clicked:
+            st.toast("Executive report (PDF) download started", icon="📥")
+    else:
+        st.markdown(
+            '<div class="error-text">PDF generation is unavailable right '
+            "now.</div>",
+            unsafe_allow_html=True,
+        )
+
+    pptx_bytes = _cached_export(
+        "lab_pptx", signature,
+        lambda: pptx_report.build_presentation(result, inputs, analysis),
+    )
+    if pptx_bytes:
+        clicked = theme.download_button(
+            "📊 Download Presentation (.pptx)",
+            data=pptx_bytes,
+            file_name="customer_churn_executive_report.pptx",
+            mime="application/vnd.openxmlformats-officedocument."
+                 "presentationml.presentation",
+            key="prediction_lab_pptx_download",
+        )
+        if clicked:
+            st.toast("Presentation (PPTX) download started", icon="📊")
+    else:
+        st.markdown(
+            '<div class="error-text">PPTX generation is unavailable right '
+            "now.</div>",
+            unsafe_allow_html=True,
+        )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # MAIN
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -594,6 +740,8 @@ def main() -> None:
         _recommendations_card(result)
     if st.session_state.get("customer_inputs"):
         _summary_card()
+    if result is not None and st.session_state.get("customer_inputs"):
+        _export_pdf(result, st.session_state["customer_inputs"])
 
 
 if __name__ == "__main__":

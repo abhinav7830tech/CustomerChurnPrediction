@@ -17,9 +17,11 @@ modeled estimates derived from the prediction and customer profile.
 
 import theme
 
+import hashlib
 import os
 import re
 import sys
+import time
 from datetime import datetime
 
 import plotly.graph_objects as go
@@ -34,6 +36,22 @@ except ModuleNotFoundError:
     if _dashboard_dir not in sys.path:
         sys.path.insert(0, _dashboard_dir)
     import prediction
+
+try:
+    import report
+except ModuleNotFoundError:
+    _dashboard_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if _dashboard_dir not in sys.path:
+        sys.path.insert(0, _dashboard_dir)
+    import report
+
+try:
+    import pptx_report
+except ModuleNotFoundError:
+    _dashboard_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if _dashboard_dir not in sys.path:
+        sys.path.insert(0, _dashboard_dir)
+    import pptx_report
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # PAGE CONFIG
@@ -428,16 +446,11 @@ def _section_head(num: str, icon: str, title: str, sub: str) -> None:
     st.markdown(theme.section_head(num, icon, title, sub), unsafe_allow_html=True)
 
 
-def _metric_tile(label: str, value: str, sub: str = "", accent: bool = False) -> str:
+def _metric_tile(label: str, value: str, sub: str = "", accent: bool = False,
+                 icon: str = "", tone: str = "") -> str:
     """HTML for an Analytics-style KPI metric tile."""
-    val_class = "kpi-value accent" if accent else "kpi-value"
-    subtext_html = f'<div class="kpi-subtext">{sub}</div>' if sub else ""
-    return (
-        f'<div class="kpi-card">'
-        f'<div class="kpi-label">{label}</div>'
-        f'<div class="{val_class}">{value}</div>'
-        f"{subtext_html}"
-        f"</div>"
+    return theme.kpi_card(
+        label, value, subtext=sub, accent=accent, icon=icon, tone=tone,
     )
 
 
@@ -596,27 +609,45 @@ def _form_panel() -> None:
         st.session_state["customer_inputs"] = inputs
         return
 
-    model = prediction.load_model(model_choice)
-    if model is None:
-        st.session_state["validation_errors"] = [
-            "The selected model could not be loaded. Please try another model."
-        ]
-        st.session_state["customer_inputs"] = inputs
-        return
+    with st.status("Running analysis…", expanded=True) as status:
+        status.update(label="Loading the trained model…", state="running")
+        model = prediction.load_model(model_choice)
+        time.sleep(0.1)
+        if model is None:
+            status.update(label="Model load failed", state="error")
+            st.session_state["validation_errors"] = [
+                "The selected model could not be loaded. Please try another model."
+            ]
+            st.session_state["customer_inputs"] = inputs
+            return
 
-    features = prediction.encode_features(inputs)
-    result = prediction.predict(model, features)
-    result["factors"] = prediction.top_factors(model_choice, features, inputs)
-    result["model_alias"] = model_choice
-    result["model_label"] = prediction.model_info(model_choice)["label"]
-    result["model_accuracy"] = prediction.model_info(model_choice)["accuracy"]
-    result["recommendations"] = prediction.generate_recommendations(
-        result["risk_label"]
-    )
+        status.update(label="Encoding customer features…")
+        features = prediction.encode_features(inputs)
+        time.sleep(0.1)
+
+        status.update(label="Scoring churn probability…")
+        result = prediction.predict(model, features)
+        time.sleep(0.1)
+
+        status.update(label="Explaining the model decision…")
+        result["factors"] = prediction.top_factors(model_choice, features, inputs)
+        result["model_alias"] = model_choice
+        result["model_label"] = prediction.model_info(model_choice)["label"]
+        result["model_accuracy"] = prediction.model_info(model_choice)["accuracy"]
+        result["recommendations"] = prediction.generate_recommendations(
+            result["risk_label"]
+        )
+
+        status.update(label="Evaluating business impact…")
+        a = _analyze(result, inputs)
+        time.sleep(0.1)
+
+        status.update(label="Analysis ready", state="complete", expanded=False)
 
     st.session_state["prediction"] = result
     st.session_state["customer_inputs"] = inputs
     st.session_state["validation_errors"] = None
+    st.toast("Business analysis complete", icon="✅")
 
 
 def _validation_card() -> None:
@@ -771,28 +802,30 @@ def _action_cards(a: dict) -> None:
 def _business_impact(a: dict) -> None:
     metrics = [
         ("Revenue at Risk", f'<span class="kpi-risk">${a["revenue_at_risk"]:,.0f}</span>',
-         "Modeled estimate · 12-mo horizon"),
+         "Modeled estimate · 12-mo horizon", "📉", "churn"),
         ("CLV Estimate", f"${a['clv_estimate']:,.0f}",
-         "Modeled estimate · 24-mo horizon"),
+         "Modeled estimate · 24-mo horizon", "💎", "health"),
         ("Retention Cost", f"${a['retention_cost']:,.0f}",
-         "Modeled program cost · 6-mo horizon"),
+         "Modeled program cost · 6-mo horizon", "🛠️", "revenue"),
         ("Potential Savings", f'<span class="kpi-safe">${a["potential_savings"]:,.0f}</span>',
-         "Modeled benefit · 65% success"),
+         "Modeled benefit · 65% success", "🌱", "revenue"),
         ("Net Expected Value", f"${a['net_benefit']:,.0f}",
-         "Benefit minus investment"),
+         "Benefit minus investment", "⚖️", "health"),
         ("ROI", f"{a['roi_pct']:.0f}%",
-         "Net value over investment"),
+         "Net value over investment", "📊", "accuracy"),
     ]
 
     row1 = st.columns(3, gap="medium")
-    for col, (label, value, sub) in zip(row1, metrics[:3]):
+    for col, (label, value, sub, icon, tone) in zip(row1, metrics[:3]):
         with col:
-            st.markdown(_metric_tile(label, value, sub), unsafe_allow_html=True)
+            st.markdown(_metric_tile(label, value, sub, icon=icon, tone=tone),
+                        unsafe_allow_html=True)
 
     row2 = st.columns(3, gap="medium")
-    for col, (label, value, sub) in zip(row2, metrics[3:]):
+    for col, (label, value, sub, icon, tone) in zip(row2, metrics[3:]):
         with col:
-            st.markdown(_metric_tile(label, value, sub, accent=(label == "ROI")),
+            st.markdown(_metric_tile(label, value, sub, accent=(label == "ROI"),
+                                     icon=icon, tone=tone),
                         unsafe_allow_html=True)
 
 
@@ -1156,34 +1189,89 @@ def _build_pdf(result: dict, inputs: dict, a: dict) -> bytes:
     return bytes(pdf.output())
 
 
+def _export_signature(result: dict, inputs: dict, a: dict) -> str:
+    """Stable signature for caching generated export bytes per prediction."""
+    flat = (
+        str(result.get("label")),
+        f"{result.get('probability_pct', 0.0):.4f}",
+        str(result.get("risk_label")),
+        str(result.get("model_alias")),
+        str(sorted((inputs or {}).items())),
+        str(sorted((a or {}).items())),
+    )
+    return hashlib.sha1("|".join(flat).encode("utf-8")).hexdigest()
+
+
+def _cached_export(kind: str, signature: str, factory) -> bytes | None:
+    """Return cached export bytes for this signature, or build and cache them."""
+    key = f"_export_cache_{kind}"
+    cached = st.session_state.get(key)
+    if cached is not None and cached[0] == signature:
+        return cached[1]
+    try:
+        data = factory()
+    except Exception:
+        return None
+    st.session_state[key] = (signature, data)
+    return data
+
+
 def _export_pdf(result: dict, inputs: dict, a: dict) -> None:
     with st.container(border=True):
         st.markdown(
             '<div class="export-desc">'
-            "Generates a clean, self-contained PDF with the executive summary, "
-            "customer profile, retention strategy, recommended actions, "
-            "cost-benefit analysis, campaign, timeline, scorecard, and manager "
-            "notes — ready to share with stakeholders or attach to a CRM case."
+            "Generates a premium executive report (PDF) and a "
+            "presentation-ready deck (PPTX) - cover page, executive summary, "
+            "prediction overview, customer details, risk assessment, KPI "
+            "summary, recommendations, and conclusion. Both are built in "
+            "memory and ready to share with stakeholders or attach to a CRM "
+            "case."
             "</div>",
             unsafe_allow_html=True,
         )
-        try:
-            pdf_bytes = _build_pdf(result, inputs, a)
-        except Exception:
-            pdf_bytes = None
 
+        signature = _export_signature(result, inputs, a)
+
+        pdf_bytes = _cached_export(
+            "biz_pdf", signature,
+            lambda: report.build_report(result, inputs, a),
+        )
         if pdf_bytes:
-            theme.download_button(
-                "📥 Download Business Report (PDF)",
+            clicked = theme.download_button(
+                "📥 Download Executive Report (PDF)",
                 data=pdf_bytes,
-                file_name="business_recommendation_report.pdf",
+                file_name="customer_churn_executive_report.pdf",
                 mime="application/pdf",
                 key="business_pdf_download",
             )
+            if clicked:
+                st.toast("Executive report (PDF) download started", icon="📥")
         else:
             st.markdown(
                 '<div class="error-text">PDF generation is unavailable right '
                 "now.</div>",
+                unsafe_allow_html=True,
+            )
+
+        pptx_bytes = _cached_export(
+            "biz_pptx", signature,
+            lambda: pptx_report.build_presentation(result, inputs, a),
+        )
+        if pptx_bytes:
+            clicked = theme.download_button(
+                "📊 Download Presentation (.pptx)",
+                data=pptx_bytes,
+                file_name="customer_churn_executive_report.pptx",
+                mime="application/vnd.openxmlformats-officedocument."
+                     "presentationml.presentation",
+                key="business_pptx_download",
+            )
+            if clicked:
+                st.toast("Presentation (PPTX) download started", icon="📊")
+        else:
+            st.markdown(
+                '<div class="error-text">PPTX generation is unavailable '
+                "right now.</div>",
                 unsafe_allow_html=True,
             )
 
@@ -1311,9 +1399,9 @@ def main() -> None:
                   "Auto-generated executive summary for the account owner")
     _manager_notes_section(result, inputs, a)
 
-    # 11 · Export to PDF
-    _section_head("11", "📄", "Export to PDF",
-                  "Download this action brief as a shareable report")
+    # 11 · Export
+    _section_head("11", "📄", "Export",
+                  "Download this action brief as a report or presentation")
     _export_pdf(result, inputs, a)
 
 

@@ -215,6 +215,30 @@ def get_explainer(alias: str) -> Optional[object]:
         return None
 
 
+@st.cache_data(show_spinner=False, max_entries=64)
+def get_shap_values(alias: str, features: np.ndarray):
+    """Return cached (base, shap_values) for a single instance.
+
+    Keyed on the model alias and the exact encoded feature vector, so SHAP
+    contributions are computed at most once per unique input instead of on
+    every rerun. For binary classifiers the churn-class slice is used.
+    Returns (None, None) when SHAP is unavailable.
+    """
+    explainer = get_explainer(alias)
+    if explainer is None:
+        return None, None
+    try:
+        ev = explainer.expected_value
+        base = float(np.asarray(ev).reshape(-1)[-1])
+        raw = explainer.shap_values(features.reshape(1, -1))
+        arr = raw[0] if isinstance(raw, list) else raw
+        if arr.ndim == 3:
+            arr = arr[:, :, 1]
+        return base, np.asarray(arr.reshape(-1), dtype=float)
+    except Exception:
+        return None, None
+
+
 # ── Encoding & validation ─────────────────────────────────────────────────
 
 

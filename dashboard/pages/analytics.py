@@ -168,32 +168,34 @@ def _kpi_row(filtered: pd.DataFrame) -> None:
 
     row1 = st.columns(3, gap="medium")
     kpi1 = [
-        ("Total Customers", f"{total:,}", False, total, "number", "", "Based on filtered data"),
-        ("Churn Rate", f"{churn_rate}%", False, churn_rate, "percent", "", "Of filtered customer base"),
-        ("Average Tenure", f"{avg_tenure} mo", False, avg_tenure, "suffix", " mo", "Filtered customer average"),
+        ("Total Customers", f"{total:,}", False, total, "number", "", "Based on filtered data", "👥", "customers"),
+        ("Churn Rate", f"{churn_rate}%", False, churn_rate, "percent", "", "Of filtered customer base", "📉", "churn"),
+        ("Average Tenure", f"{avg_tenure} mo", False, avg_tenure, "suffix", " mo", "Filtered customer average", "⏳", "retention"),
     ]
-    for col, (label, value, accent, dv, dfmt, dsuf, sub) in zip(row1, kpi1):
+    for col, (label, value, accent, dv, dfmt, dsuf, sub, icon, tone) in zip(row1, kpi1):
         with col:
             st.markdown(
                 theme.kpi_card(
                     label, value, subtext=sub, accent=accent,
                     data_value=dv, data_format=dfmt, data_suffix=dsuf,
+                    icon=icon, tone=tone,
                 ),
                 unsafe_allow_html=True,
             )
 
     row2 = st.columns(3, gap="medium")
     kpi2 = [
-        ("Avg. Monthly Charges", f"${avg_monthly:.2f}", False, avg_monthly, "currency", "", "Per customer average"),
-        ("Total Charges", f"${avg_total:.2f}", False, avg_total, "currency", "", "Average per customer"),
-        ("Churned Customers", f"{churned_count:,}", True, churned_count, "number", "", "In filtered dataset"),
+        ("Avg. Monthly Charges", f"${avg_monthly:.2f}", False, avg_monthly, "currency", "", "Per customer average", "💰", "revenue"),
+        ("Total Charges", f"${avg_total:.2f}", False, avg_total, "currency", "", "Average per customer", "💳", "health"),
+        ("Churned Customers", f"{churned_count:,}", True, churned_count, "number", "", "In filtered dataset", "🚪", "churn"),
     ]
-    for col, (label, value, accent, dv, dfmt, dsuf, sub) in zip(row2, kpi2):
+    for col, (label, value, accent, dv, dfmt, dsuf, sub, icon, tone) in zip(row2, kpi2):
         with col:
             st.markdown(
                 theme.kpi_card(
                     label, value, subtext=sub, accent=accent,
                     data_value=dv, data_format=dfmt, data_suffix=dsuf,
+                    icon=icon, tone=tone,
                 ),
                 unsafe_allow_html=True,
             )
@@ -361,6 +363,49 @@ def _correlation_heatmap(encoded: pd.DataFrame) -> go.Figure:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# CHART PACK MEMOIZATION
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+_CHART_COLUMNS = [
+    "gender", "SeniorCitizen", "Partner", "Dependents",
+    "InternetService", "Contract", "PaymentMethod",
+]
+
+_CHART_CACHE_KEY = "_analytics_chart_pack"
+
+
+def _chart_pack(filtered: pd.DataFrame, encoded_all: pd.DataFrame) -> tuple:
+    """Build all 8 figures once per distinct filter state.
+
+    The filtered DataFrame is fully determined by the sidebar multiselect
+    values, so the memo is keyed on those values (cheap to derive, fast to
+    hash) rather than on the DataFrame itself — hashing the full dataset on
+    every rerun would cost more than rebuilding the charts.
+    """
+    key = tuple(tuple(filtered[c].unique()) for c in _CHART_COLUMNS)
+    cache = st.session_state.setdefault(_CHART_CACHE_KEY, {})
+    if len(cache) > 4:
+        cache.clear()
+    pack = cache.get(key)
+    if pack is None:
+        idxs = set(filtered.index)
+        enc_filtered = encoded_all[encoded_all.index.isin(idxs)].reset_index(drop=True)
+        pack = (
+            _churn_donut(filtered),
+            _contract_chart(filtered),
+            _internet_chart(filtered),
+            _payment_chart(filtered),
+            _monthly_hist(filtered),
+            _tenure_hist(filtered),
+            _senior_chart(filtered),
+            _correlation_heatmap(enc_filtered),
+        )
+        cache[key] = pack
+    return pack
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # CHARTS SECTION
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -381,6 +426,11 @@ def _charts_section(filtered: pd.DataFrame, encoded_all: pd.DataFrame) -> None:
         unsafe_allow_html=True,
     )
 
+    donut_fig, contract_fig, internet_fig, payment_fig, \
+        monthly_fig, tenure_fig, senior_fig, corr_fig = _chart_pack(
+            filtered, encoded_all
+        )
+
     # Row 1: Churn donut + Contract chart
     c1, c2 = st.columns(2, gap="medium")
     with c1:
@@ -389,14 +439,14 @@ def _charts_section(filtered: pd.DataFrame, encoded_all: pd.DataFrame) -> None:
             '<div class="chart-desc">Overview of churn vs retained customer proportions</div>',
             unsafe_allow_html=True,
         )
-        st.plotly_chart(_churn_donut(filtered), use_container_width=True)
+        st.plotly_chart(donut_fig, width="stretch")
     with c2:
         st.markdown(
             '<div class="chart-title">Contract Type vs Churn</div>'
             '<div class="chart-desc">Comparison of churn rates across contract types</div>',
             unsafe_allow_html=True,
         )
-        st.plotly_chart(_contract_chart(filtered), use_container_width=True)
+        st.plotly_chart(contract_fig, width="stretch")
 
     # Row 2: Internet service + Payment method
     c1, c2 = st.columns(2, gap="medium")
@@ -406,14 +456,14 @@ def _charts_section(filtered: pd.DataFrame, encoded_all: pd.DataFrame) -> None:
             '<div class="chart-desc">Churn distribution by internet service type</div>',
             unsafe_allow_html=True,
         )
-        st.plotly_chart(_internet_chart(filtered), use_container_width=True)
+        st.plotly_chart(internet_fig, width="stretch")
     with c2:
         st.markdown(
             '<div class="chart-title">Payment Method vs Churn</div>'
             '<div class="chart-desc">Churn rates segmented by payment method</div>',
             unsafe_allow_html=True,
         )
-        st.plotly_chart(_payment_chart(filtered), use_container_width=True)
+        st.plotly_chart(payment_fig, width="stretch")
 
     # Row 3: Monthly charges + Tenure histograms
     c1, c2 = st.columns(2, gap="medium")
@@ -423,14 +473,14 @@ def _charts_section(filtered: pd.DataFrame, encoded_all: pd.DataFrame) -> None:
             '<div class="chart-desc">Distribution of monthly charges for churned and retained customers</div>',
             unsafe_allow_html=True,
         )
-        st.plotly_chart(_monthly_hist(filtered), use_container_width=True)
+        st.plotly_chart(monthly_fig, width="stretch")
     with c2:
         st.markdown(
             '<div class="chart-title">Tenure Distribution</div>'
             '<div class="chart-desc">Distribution of customer tenure by churn status</div>',
             unsafe_allow_html=True,
         )
-        st.plotly_chart(_tenure_hist(filtered), use_container_width=True)
+        st.plotly_chart(tenure_fig, width="stretch")
 
     # Row 4: Senior citizen + Correlation heatmap
     c1, c2 = st.columns(2, gap="medium")
@@ -440,16 +490,14 @@ def _charts_section(filtered: pd.DataFrame, encoded_all: pd.DataFrame) -> None:
             '<div class="chart-desc">Churn rate comparison between senior and non-senior customers</div>',
             unsafe_allow_html=True,
         )
-        st.plotly_chart(_senior_chart(filtered), use_container_width=True)
+        st.plotly_chart(senior_fig, width="stretch")
     with c2:
-        idxs = set(filtered.index)
-        enc_filtered = encoded_all[encoded_all.index.isin(idxs)].reset_index(drop=True)
         st.markdown(
             '<div class="chart-title">Feature Correlation Heatmap</div>'
             '<div class="chart-desc">Feature correlation matrix highlighting relationships with churn</div>',
             unsafe_allow_html=True,
         )
-        st.plotly_chart(_correlation_heatmap(enc_filtered), use_container_width=True)
+        st.plotly_chart(corr_fig, width="stretch")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -484,7 +532,7 @@ def _data_table(filtered: pd.DataFrame) -> None:
     display = filtered.drop(columns=["customerID"], errors="ignore")
     st.dataframe(
         display,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         column_config={col: st.column_config.TextColumn(col) for col in display.columns},
     )
@@ -604,12 +652,14 @@ def _export_button(filtered: pd.DataFrame) -> None:
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
         csv = filtered.to_csv(index=False).encode("utf-8")
-        theme.download_button(
+        clicked = theme.download_button(
             label="📥 Download Filtered Data (CSV)",
             data=csv,
             file_name="telco_churn_filtered.csv",
             mime="text/csv",
         )
+        if clicked:
+            st.toast("Filtered data (CSV) download started", icon="📥")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

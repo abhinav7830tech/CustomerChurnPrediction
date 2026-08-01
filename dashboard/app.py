@@ -52,11 +52,13 @@ def _badge(name: str, color: str) -> str:
 
 def _kpi_card(title: str, value: str, delay: float, accent: bool = False,
               data_value: float | None = None, data_format: str = "number",
-              data_suffix: str = "", subtext: str = "") -> str:
+              data_suffix: str = "", subtext: str = "",
+              icon: str = "", tone: str = "") -> str:
     """KPI metric card — delegates to the shared design system."""
     return theme.kpi_card(
         title, value, subtext=subtext, accent=accent, delay=delay,
         data_value=data_value, data_format=data_format, data_suffix=data_suffix,
+        icon=icon, tone=tone,
     )
 
 
@@ -95,7 +97,11 @@ def _sidebar(total_customers: int) -> None:
         st.markdown(
             '<div class="sidebar-section">'
             '<div class="sidebar-label">GitHub</div>'
-            '<div class="sidebar-value muted">github.com/abhinav/placeholder</div>'
+            '<div class="sidebar-value muted">'
+            '<a href="https://github.com/abhinav7830tech" target="_blank" rel="noopener noreferrer">'
+            'https://github.com/abhinav7830tech'
+            '</a>'
+            '</div>'
             '</div>',
             unsafe_allow_html=True,
         )
@@ -145,27 +151,27 @@ def _kpi_section(
 
     row1 = st.columns(3, gap="medium")
     kpi1_data = [
-        ("Total Customers", f"{total_customers:,}", 0.1, False, total_customers, "number", "", "Active subscribers"),
-        ("Churn Rate", f"{churn_rate}%", 0.2, False, churn_rate, "percent", "", "Of total customer base"),
-        ("Average Tenure", f"{avg_tenure} mo", 0.3, False, avg_tenure, "suffix", " mo", "Average customer relationship"),
+        ("Total Customers", f"{total_customers:,}", 0.1, False, total_customers, "number", "", "Active subscribers", "👥", "customers"),
+        ("Churn Rate", f"{churn_rate}%", 0.2, False, churn_rate, "percent", "", "Of total customer base", "📉", "churn"),
+        ("Average Tenure", f"{avg_tenure} mo", 0.3, False, avg_tenure, "suffix", " mo", "Average customer relationship", "⏳", "retention"),
     ]
-    for col, (title, value, delay, accent, dv, dfmt, dsuf, sub) in zip(row1, kpi1_data):
+    for col, (title, value, delay, accent, dv, dfmt, dsuf, sub, icon, tone) in zip(row1, kpi1_data):
         with col:
             st.markdown(
-                _kpi_card(title, value, delay, accent, dv, dfmt, dsuf, sub),
+                _kpi_card(title, value, delay, accent, dv, dfmt, dsuf, sub, icon, tone),
                 unsafe_allow_html=True,
             )
 
     row2 = st.columns(3, gap="medium")
     kpi2_data = [
-        ("Avg. Monthly Charges", f"${avg_monthly_charges:.2f}", 0.4, False, avg_monthly_charges, "currency", "", "Per customer average"),
-        ("Best Model", best_model, 0.5, False, None, "text", "", "Primary prediction model"),
-        ("Model Accuracy", model_accuracy, 0.6, True, 76.1, "percent", "", "Based on test dataset"),
+        ("Avg. Monthly Charges", f"${avg_monthly_charges:.2f}", 0.4, False, avg_monthly_charges, "currency", "", "Per customer average", "💰", "revenue"),
+        ("Best Model", best_model, 0.5, False, None, "text", "", "Primary prediction model", "🧠", "health"),
+        ("Model Accuracy", model_accuracy, 0.6, True, 76.1, "percent", "", "Based on test dataset", "🎯", "accuracy"),
     ]
-    for col, (title, value, delay, accent, dv, dfmt, dsuf, sub) in zip(row2, kpi2_data):
+    for col, (title, value, delay, accent, dv, dfmt, dsuf, sub, icon, tone) in zip(row2, kpi2_data):
         with col:
             st.markdown(
-                _kpi_card(title, value, delay, accent, dv, dfmt, dsuf, sub),
+                _kpi_card(title, value, delay, accent, dv, dfmt, dsuf, sub, icon, tone),
                 unsafe_allow_html=True,
             )
 
@@ -202,20 +208,13 @@ def _insights_section(
 
 
 def _action_buttons() -> None:
-    """CTA buttons — Open Analytics navigates to the analytics page."""
+    """CTA buttons — navigate to the analytics and prediction pages."""
     st.markdown('<hr class="custom-divider">', unsafe_allow_html=True)
     cols = st.columns([1, 1.5, 0.5, 1.5, 1])
     with cols[1]:
-        st.markdown('<div class="nav-btn-wrapper">', unsafe_allow_html=True)
-        st.page_link("pages/analytics.py", label="📈 Open Analytics", use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.page_link("pages/analytics.py", label="📈 Open Analytics", width="stretch")
     with cols[3]:
-        st.markdown(
-            '<div style="display:flex;justify-content:center;">'
-            '<a class="btn-secondary"><span>🎯</span> Predict Customer</a>'
-            '</div>',
-            unsafe_allow_html=True,
-        )
+        st.page_link("pages/prediction_lab.py", label="🎯 Predict Customer", width="stretch")
 
 
 def _footer() -> None:
@@ -224,7 +223,10 @@ def _footer() -> None:
         '<div class="footer">'
         '<div class="footer-title">Customer Churn Analytics Platform</div>'
         '<div class="footer-info">'
-        'v1.0.0 <span>|</span> 2025-07-31 <span>|</span> Abhinav Agnihotri <span>|</span> github.com/abhinav/placeholder'
+        'v1.0.0 <span>|</span> 2025-07-31 <span>|</span> Abhinav Agnihotri <span>|</span> '
+        '<a href="https://github.com/abhinav7830tech" target="_blank" rel="noopener noreferrer">'
+        'https://github.com/abhinav7830tech'
+        '</a>'
         '</div>'
         '</div>',
         unsafe_allow_html=True,
