@@ -8,7 +8,17 @@ Author: Abhinav Agnihotri
 Version: 1.0.0
 """
 
+import sys
+from pathlib import Path
+
 import streamlit as st
+
+try:
+    sys.path.insert(0, str(Path(__file__).resolve().parent / "dashboard"))
+    import theme  # shared design system (theme.css + components)
+    _HAS_THEME = True
+except Exception:
+    _HAS_THEME = False
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # PAGE CONFIG
@@ -27,293 +37,52 @@ st.set_page_config(
 
 
 def _inject_css() -> None:
-    """Inject global styles, fonts, and animations."""
-    st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    """Inject the shared design-system styles plus landing-only extras."""
+    extra = """
+    .kpi-card { animation: fadeIn 0.5s ease both; }
 
-    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
-
-    .stApp { background: #08080f; }
-
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-        max-width: 1200px;
-    }
-
-    /* ── Accent bar ── */
-    .stApp::before {
-        content: '';
-        position: fixed;
-        top: 0; left: 0; right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #3b82f6, #60a5fa, #3b82f6);
-        z-index: 999;
-    }
-
-    /* ── Hide Streamlit chrome ── */
-    #MainMenu { visibility: hidden; }
-    footer { visibility: hidden; }
-    .stDeployButton { display: none; }
-
-    /* ── Header ── */
-    .header-container { text-align: center; padding: 2rem 0 0.5rem 0; }
-
-    .header-title {
-        font-size: 2.8rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, #f8fafc 0%, #60a5fa 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin-bottom: 0.5rem;
-        letter-spacing: -0.02em;
-        line-height: 1.2;
-    }
-
-    .header-subtitle {
-        font-size: 1.1rem;
-        color: #64748b;
-        font-weight: 400;
-        margin-bottom: 1.5rem;
-    }
-
-    /* ── Badges ── */
-    .badge-container {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-        margin-top: 1rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.35rem 1rem;
-        border-radius: 100px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        letter-spacing: 0.01em;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-
-    /* ── Keyframes ── */
-    @keyframes fadeSlideUp {
-        0% { opacity: 0; transform: translateY(24px); }
-        100% { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ── KPI Cards ── */
-    .kpi-card {
-        background: linear-gradient(145deg, #14142a 0%, #1a1a35 100%);
-        border: 1px solid rgba(59, 130, 246, 0.1);
-        border-radius: 16px;
-        padding: 1.5rem 1rem;
-        text-align: center;
-        animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        opacity: 0;
-        transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-        height: 100%;
-    }
-
-    .kpi-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 40px rgba(59, 130, 246, 0.12);
-        border-color: rgba(59, 130, 246, 0.3);
-    }
-
-    .kpi-label {
-        font-size: 0.75rem;
-        font-weight: 500;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        margin-bottom: 0.5rem;
-    }
-
-    .kpi-value {
-        font-size: 2.2rem;
-        font-weight: 800;
-        color: #f8fafc;
-        line-height: 1.2;
-    }
-
-    .kpi-value.accent { color: #3b82f6; }
-
-    /* ── Section headers ── */
-    .section-header {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #f8fafc;
-        margin-bottom: 0.25rem;
-    }
-
-    .section-sub {
-        font-size: 0.85rem;
-        color: #475569;
-        margin-bottom: 1.5rem;
-    }
-
-    /* ── Insight Cards ── */
-    .insight-card {
-        background: linear-gradient(145deg, #14142a 0%, #1a1a35 100%);
-        border: 1px solid rgba(59, 130, 246, 0.08);
-        border-radius: 14px;
-        padding: 1.5rem;
-        animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        opacity: 0;
-        transition: transform 0.3s ease, border-color 0.3s ease;
-        height: 100%;
-    }
-
-    .insight-card:hover {
-        transform: translateY(-2px);
-        border-color: rgba(59, 130, 246, 0.25);
-    }
-
-    .insight-icon { font-size: 1.8rem; margin-bottom: 0.75rem; }
-
-    .insight-title {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #f8fafc;
-        margin-bottom: 0.35rem;
-        line-height: 1.4;
-    }
-
-    .insight-text {
-        font-size: 0.8rem;
-        color: #64748b;
-        line-height: 1.5;
-    }
-
-    /* ── Dividers ── */
-    .custom-divider {
-        border: none;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.15), transparent);
-        margin: 2.5rem 0;
-    }
-
-    /* ── Action buttons ── */
-    .action-btn-container {
-        display: flex;
-        justify-content: center;
-        gap: 1.5rem;
-        margin: 2.5rem 0 1rem 0;
-        flex-wrap: wrap;
-    }
-
-    .btn-primary, .btn-secondary {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.8rem 2rem;
-        border-radius: 10px;
-        font-size: 0.95rem;
-        font-weight: 600;
-        cursor: default;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        text-decoration: none;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #3b82f6, #2563eb);
-        color: #fff;
-        box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
-    }
-
-    .btn-secondary {
-        background: transparent;
-        color: #94a3b8;
-        border: 1px solid rgba(148, 163, 184, 0.2);
-    }
-
-    .btn-secondary:hover {
-        border-color: rgba(59, 130, 246, 0.4);
-        color: #f8fafc;
-        transform: translateY(-2px);
-    }
-
-    /* ── Footer ── */
-    .footer {
-        text-align: center;
-        padding: 2.5rem 0 1rem 0;
-        border-top: 1px solid rgba(148, 163, 184, 0.08);
-        margin-top: 1rem;
-    }
-
-    .footer-title {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #f8fafc;
-        margin-bottom: 0.25rem;
-    }
-
-    .footer-sub {
-        font-size: 0.8rem;
-        color: #475569;
-    }
-
-    /* ── Sidebar ── */
-    section[data-testid="stSidebar"] {
-        background: #0c0c1a;
-        border-right: 1px solid rgba(59, 130, 246, 0.08);
-    }
-
-    section[data-testid="stSidebar"] .stMarkdown {
-        padding: 0 1rem;
-    }
-
-    .sidebar-title {
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: #f8fafc;
-        padding: 1.5rem 0 0.5rem 0;
-    }
-
-    .sidebar-section { margin-bottom: 1.25rem; }
-
-    .sidebar-label {
-        font-size: 0.65rem;
-        font-weight: 600;
-        color: #475569;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        margin-bottom: 0.3rem;
-    }
-
-    .sidebar-value {
-        font-size: 0.9rem;
-        color: #cbd5e1;
-        line-height: 1.4;
-    }
-
-    .sidebar-value.muted { color: #475569; }
-
-    .sidebar-divider {
-        border: none;
-        height: 1px;
-        background: rgba(148, 163, 184, 0.08);
-        margin: 1.25rem 0;
-    }
-
-    /* ── Responsive ── */
     @media (max-width: 768px) {
         .header-title { font-size: 1.8rem; }
-        .kpi-value { font-size: 1.5rem; }
-        .action-btn-container { flex-direction: column; align-items: center; }
+        .kpi-value { font-size: 1.3rem; }
     }
-    </style>
-    """, unsafe_allow_html=True)
+    """
+    if _HAS_THEME:
+        theme.inject_css(extra)
+        return
+    st.markdown(
+        "<style>"
+        ".stApp{background:#0F3040;}"
+        ".block-container{max-width:1200px;padding-top:2rem;padding-bottom:2rem;}"
+        ".header-container{text-align:center;padding:2rem 0 .5rem 0;}"
+        ".header-title{font-size:2.2rem;font-weight:800;color:#F4F2EE;margin-bottom:.5rem;}"
+        ".header-subtitle{font-size:1.1rem;color:#D6D8D8;margin-bottom:1.5rem;}"
+        ".badge-container{display:flex;justify-content:center;flex-wrap:wrap;gap:.75rem;margin:1rem 0 1.5rem 0;}"
+        ".badge{display:inline-flex;align-items:center;padding:.3rem 1rem;border-radius:100px;font-size:.75rem;color:#F4F2EE;border:1px solid rgba(255,255,255,.12);}"
+        ".kpi-card,.insight-card{background:linear-gradient(180deg,#234556,#1f3d4d);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:1.4rem 1rem;text-align:center;}"
+        ".kpi-value{font-size:1.8rem;font-weight:700;color:#F4F2EE;}"
+        ".kpi-value.accent{color:#C8A96B;}"
+        ".kpi-label{font-size:.7rem;color:#D6D8D8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.35rem;}"
+        ".insight-icon{font-size:1.5rem;margin-bottom:.6rem;}"
+        ".insight-title{font-size:.88rem;font-weight:700;color:#F4F2EE;margin-bottom:.35rem;}"
+        ".insight-text{font-size:.76rem;color:#D6D8D8;line-height:1.6;}"
+        ".section-header{font-size:1.15rem;font-weight:700;color:#F4F2EE;margin-bottom:.15rem;}"
+        ".section-sub{font-size:.8rem;color:#D6D8D8;margin-bottom:1rem;}"
+        ".custom-divider{border:none;height:1px;background:rgba(255,255,255,.08);margin:1.5rem 0;}"
+        ".action-btn-container{display:flex;justify-content:center;gap:1.5rem;margin:2.5rem 0 1rem 0;flex-wrap:wrap;}"
+        ".btn-primary,.btn-secondary{display:inline-flex;align-items:center;gap:.5rem;padding:.8rem 2rem;border-radius:12px;font-size:.9rem;font-weight:600;text-decoration:none;}"
+        ".btn-primary{background:linear-gradient(135deg,#C8A96B,#b09055);color:#0F3040;}"
+        ".btn-secondary{background:transparent;color:#D6D8D8;border:1px solid rgba(255,255,255,.08);}"
+        ".footer{text-align:center;padding:2.5rem 0 1rem 0;border-top:1px solid rgba(255,255,255,.08);}"
+        ".footer-title{font-size:1rem;font-weight:600;color:#F4F2EE;margin-bottom:.25rem;}"
+        ".footer-sub{font-size:.8rem;color:#D6D8D8;opacity:.7;}"
+        ".sidebar-title{font-size:1.1rem;font-weight:700;color:#F4F2EE;padding:1.5rem 0 .5rem 0;}"
+        ".sidebar-label{font-size:.6rem;font-weight:600;color:#C8A96B;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.3rem;}"
+        ".sidebar-value{font-size:.85rem;color:#D6D8D8;line-height:1.4;}"
+        ".sidebar-value.muted{color:rgba(255,255,255,.3);}"
+        ".sidebar-divider{border:none;height:1px;background:rgba(255,255,255,.08);margin:1.25rem 0;}"
+        "</style>",
+        unsafe_allow_html=True,
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -323,6 +92,8 @@ def _inject_css() -> None:
 
 def _badge(name: str, color: str) -> str:
     """Return HTML for a pill-shaped technology badge."""
+    if _HAS_THEME:
+        return theme.metric_badge(name, color)
     return (
         f'<span class="badge" style="background:{color};color:#fff">'
         f'{name}</span>'
@@ -331,6 +102,8 @@ def _badge(name: str, color: str) -> str:
 
 def _kpi_card(title: str, value: str, delay: float, accent: bool = False) -> str:
     """Return HTML for an animated KPI metric card."""
+    if _HAS_THEME:
+        return theme.kpi_card(title, value, accent=accent, delay=delay)
     val_class = "kpi-value accent" if accent else "kpi-value"
     return (
         f'<div class="kpi-card" style="animation-delay:{delay}s">'
@@ -342,6 +115,8 @@ def _kpi_card(title: str, value: str, delay: float, accent: bool = False) -> str
 
 def _insight_card(icon: str, title: str, desc: str, delay: float) -> str:
     """Return HTML for an insight card."""
+    if _HAS_THEME:
+        return theme.info_card(icon, title, desc, delay)
     return (
         f'<div class="insight-card" style="animation-delay:{delay}s">'
         f'<div class="insight-icon">{icon}</div>'
@@ -456,16 +231,22 @@ def _kpi_section() -> None:
 def _insights_section() -> None:
     """Four insight cards highlighting key churn patterns."""
     st.markdown('<hr class="custom-divider">', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="section-header">🔍 Key Insights</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        '<div class="section-sub">'
-        'Data-driven patterns discovered during exploratory analysis'
-        '</div>',
-        unsafe_allow_html=True,
-    )
+    if _HAS_THEME:
+        theme.section_header(
+            "🔍 Key Insights",
+            sub="Data-driven patterns discovered during exploratory analysis",
+        )
+    else:
+        st.markdown(
+            '<div class="section-header">🔍 Key Insights</div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            '<div class="section-sub">'
+            'Data-driven patterns discovered during exploratory analysis'
+            '</div>',
+            unsafe_allow_html=True,
+        )
 
     cols = st.columns(4, gap="medium")
     insights = [

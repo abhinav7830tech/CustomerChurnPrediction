@@ -5,6 +5,8 @@ Sprint 2: Live KPIs from dataset.
 All hardcoded values replaced with dynamically calculated metrics.
 """
 
+import theme
+
 import streamlit as st
 
 from utils import (
@@ -38,414 +40,29 @@ st.set_page_config(
 
 
 def _inject_css() -> None:
-    """Inject global styles, fonts, animations, and counter JS."""
-    st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
-    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
-
-    .stApp { background: #0F3040; }
-
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-    }
-
-    .stApp::before {
-        content: '';
-        position: fixed;
-        top: 0; left: 0; right: 0;
-        height: 3px;
-        background: #C8A96B;
-        z-index: 999;
-    }
-
-    #MainMenu { visibility: hidden; }
-    footer { visibility: hidden; }
-    .stDeployButton { display: none; }
-
-    .header-container { text-align: center; padding: 2.5rem 0 1rem 0; }
-
-    .header-title {
-        font-size: 2.8rem;
-        font-weight: 800;
-        color: #F4F2EE;
-        margin-bottom: 0.5rem;
-        letter-spacing: -0.02em;
-        line-height: 1.2;
-    }
-
-    .header-subtitle {
-        font-size: 1.1rem;
-        color: #D6D8D8;
-        font-weight: 400;
-        margin-bottom: 1.5rem;
-    }
-
-    .badge-container {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-        margin-top: 1rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.3rem 1rem;
-        border-radius: 100px;
-        font-size: 0.75rem;
-        font-weight: 500;
-        letter-spacing: 0.02em;
-        border: 1px solid rgba(255,255,255,0.08);
-    }
-
-    @keyframes fadeIn {
-        0% { opacity: 0; }
-        100% { opacity: 1; }
-    }
-
-    @keyframes skeletonPulse {
-        0% { opacity: 0.4; }
-        50% { opacity: 0.8; }
-        100% { opacity: 0.4; }
-    }
-
-    .skeleton {
-        background: #234556;
-        border-radius: 18px;
-        animation: skeletonPulse 1.5s ease-in-out infinite;
-    }
-
-    .skeleton-kpi {
-        height: 130px;
-        margin-bottom: 1rem;
-    }
-
-    .skeleton-header {
-        height: 80px;
-        margin-bottom: 2rem;
-        max-width: 500px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-
-    .kpi-card {
-        position: relative;
-        background: #234556;
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 18px;
-        padding: 1.5rem 1rem;
-        text-align: center;
-        animation: fadeIn 0.5s ease forwards;
-        opacity: 0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        height: 100%;
-    }
-
-    .kpi-card::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 1.5rem; right: 1.5rem;
-        height: 3px;
-        background: #C8A96B;
-        border-radius: 0 0 3px 3px;
-    }
-
-    .kpi-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-    }
-
-    .kpi-label {
-        font-size: 0.7rem;
-        font-weight: 500;
-        color: #D6D8D8;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        margin-bottom: 0.5rem;
-    }
-
-    .kpi-value {
-        font-size: 2.2rem;
-        font-weight: 700;
-        color: #F4F2EE;
-        line-height: 1.2;
-    }
-
-    .kpi-value.accent { color: #C8A96B; }
-
-    .kpi-subtext {
-        font-size: 0.6rem;
-        color: #D6D8D8;
-        margin-top: 0.5rem;
-        font-weight: 400;
-        opacity: 0.7;
-    }
-
-    .section-header {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #F4F2EE;
-        margin-bottom: 0.25rem;
-    }
-
-    .section-sub {
-        font-size: 0.85rem;
-        color: #D6D8D8;
-        margin-bottom: 1.5rem;
-    }
-
-    .insight-card {
-        position: relative;
-        background: #234556;
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 18px;
-        padding: 1.5rem;
-        animation: fadeIn 0.5s ease forwards;
-        opacity: 0;
-        height: 100%;
-    }
-
-    .insight-card::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 1.5rem; right: 1.5rem;
-        height: 2px;
-        background: #C8A96B;
-    }
-
-    .insight-icon {
-        font-size: 1.2rem;
-        color: #8FA28A;
-        margin-bottom: 0.75rem;
-    }
-
-    .insight-title {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #F4F2EE;
-        margin-bottom: 0.35rem;
-        line-height: 1.4;
-    }
-
-    .insight-text {
-        font-size: 0.8rem;
-        color: #D6D8D8;
-        line-height: 1.5;
-    }
-
-    .custom-divider {
-        border: none;
-        height: 1px;
-        background: rgba(255,255,255,0.08);
-        margin: 2.5rem 0;
-    }
-
-    .action-btn-container {
-        display: flex;
-        justify-content: center;
-        gap: 1.5rem;
-        margin: 2.5rem 0 1rem 0;
-        flex-wrap: wrap;
-    }
-
-    .btn-primary, .btn-secondary {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.8rem 2rem;
-        border-radius: 14px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        text-decoration: none;
-    }
-
-    .btn-primary {
-        background: #C8A96B;
-        color: #0F3040;
-        cursor: pointer;
-        border: none;
-    }
-
-    .btn-primary:hover {
-        background: #8FA28A;
-    }
-
-    .btn-secondary {
-        background: transparent;
-        color: #D6D8D8;
-        border: 1px solid rgba(255,255,255,0.08);
-        cursor: default;
-    }
-
-    .nav-btn-wrapper a {
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 0.5rem !important;
-        padding: 0.8rem 2rem !important;
-        border-radius: 14px !important;
-        font-size: 0.9rem !important;
-        font-weight: 600 !important;
-        background: #C8A96B !important;
-        color: #0F3040 !important;
-        text-decoration: none !important;
-        cursor: pointer !important;
-        border: none !important;
-        justify-content: center !important;
-        width: 100% !important;
-    }
-
-    .nav-btn-wrapper a:hover {
-        background: #8FA28A !important;
-        color: #0F3040 !important;
-    }
-
-    .footer {
-        text-align: center;
-        padding: 2rem 0 1rem 0;
-        border-top: 1px solid rgba(255,255,255,0.06);
-        margin-top: 1rem;
-    }
-
-    .footer-title {
-        font-size: 0.85rem;
-        font-weight: 500;
-        color: #D6D8D8;
-        margin-bottom: 0.3rem;
-    }
-
-    .footer-info {
-        font-size: 0.7rem;
-        color: rgba(255,255,255,0.35);
-        line-height: 1.6;
-    }
-
-    .footer-info span {
-        margin: 0 0.5rem;
-        opacity: 0.5;
-    }
-
-    section[data-testid="stSidebar"] {
-        background: #163949;
-        border-right: 1px solid rgba(255,255,255,0.06);
-    }
-
-    section[data-testid="stSidebar"] .stMarkdown {
-        padding: 0 1rem;
-    }
-
-    .sidebar-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #F4F2EE;
-        padding: 1.5rem 0 0.5rem 0;
-    }
-
-    .sidebar-section { margin-bottom: 1.25rem; }
-
-    .sidebar-label {
-        font-size: 0.6rem;
-        font-weight: 600;
-        color: #C8A96B;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        margin-bottom: 0.3rem;
-    }
-
-    .sidebar-value {
-        font-size: 0.85rem;
-        color: #D6D8D8;
-        line-height: 1.4;
-    }
-
-    .sidebar-value.muted { color: rgba(255,255,255,0.3); }
-
-    .sidebar-divider {
-        border: none;
-        height: 1px;
-        background: rgba(255,255,255,0.06);
-        margin: 1.25rem 0;
-    }
-
-    @media (max-width: 768px) {
-        .header-title { font-size: 1.8rem; }
-        .kpi-value { font-size: 1.5rem; }
-        .action-btn-container { flex-direction: column; align-items: center; }
-    }
-    </style>
-
-    <script>
-    setTimeout(function() {
-        var els = document.querySelectorAll('.kpi-value[data-value]');
-        els.forEach(function(el) {
-            var target = parseFloat(el.getAttribute('data-value'));
-            if (isNaN(target)) return;
-            var fmt = el.getAttribute('data-format') || 'number';
-            var sfx = el.getAttribute('data-suffix') || '';
-            var dur = 800;
-            var start = null;
-            function tick(ts) {
-                if (!start) start = ts;
-                var p = Math.min((ts - start) / dur, 1);
-                var e = 1 - Math.pow(1 - p, 3);
-                var v = e * target;
-                if (fmt === 'percent') el.textContent = v.toFixed(1) + '%';
-                else if (fmt === 'currency') el.textContent = '$' + v.toFixed(2);
-                else if (fmt === 'suffix') el.textContent = Math.round(v) + sfx;
-                else el.textContent = Math.round(v).toLocaleString();
-                if (p < 1) requestAnimationFrame(tick);
-            }
-            requestAnimationFrame(tick);
-        });
-    }, 150);
-    </script>
-    """, unsafe_allow_html=True)
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# REUSABLE COMPONENTS
-# ═══════════════════════════════════════════════════════════════════════════════
+    """Inject the shared design-system styles and counter animation JS."""
+    theme.inject_css()
+    theme.inject_kpi_counter()
 
 
 def _badge(name: str, color: str) -> str:
     """Return HTML for a pill-shaped technology badge."""
-    return (
-        f'<span class="badge" style="background:{color};color:#fff">'
-        f'{name}</span>'
-    )
+    return theme.metric_badge(name, color)
 
 
 def _kpi_card(title: str, value: str, delay: float, accent: bool = False,
               data_value: float | None = None, data_format: str = "number",
               data_suffix: str = "", subtext: str = "") -> str:
-    """Return HTML for an animated KPI metric card with counter animation support."""
-    val_class = "kpi-value accent" if accent else "kpi-value"
-    data_attrs = ""
-    if data_value is not None:
-        data_attrs = f' data-value="{data_value}" data-format="{data_format}" data-suffix="{data_suffix}"'
-    subtext_html = f'<div class="kpi-subtext">{subtext}</div>' if subtext else ""
-    return (
-        f'<div class="kpi-card" style="animation-delay:{delay}s">'
-        f'<div class="kpi-label">{title}</div>'
-        f'<div class="{val_class}"{data_attrs}>{value}</div>'
-        f'{subtext_html}'
-        f'</div>'
+    """KPI metric card — delegates to the shared design system."""
+    return theme.kpi_card(
+        title, value, subtext=subtext, accent=accent, delay=delay,
+        data_value=data_value, data_format=data_format, data_suffix=data_suffix,
     )
 
 
 def _insight_card(icon: str, title: str, desc: str, delay: float) -> str:
-    """Return HTML for an insight card."""
-    return (
-        f'<div class="insight-card" style="animation-delay:{delay}s">'
-        f'<div class="insight-icon">{icon}</div>'
-        f'<div class="insight-title">{title}</div>'
-        f'<div class="insight-text">{desc}</div>'
-        f'</div>'
-    )
+    """Insight card — delegates to the shared design system."""
+    return theme.info_card(icon, title, desc, delay)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -563,16 +180,7 @@ def _insights_section(
 ) -> None:
     """Four insight cards highlighting key churn patterns."""
     st.markdown('<hr class="custom-divider">', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="section-header">Key Insights</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        '<div class="section-sub">'
-        'Data-driven patterns discovered during exploratory analysis'
-        '</div>',
-        unsafe_allow_html=True,
-    )
+    theme.section_header("Key Insights", sub="Data-driven patterns discovered during exploratory analysis")
 
     cols = st.columns(4, gap="medium")
     insights = [

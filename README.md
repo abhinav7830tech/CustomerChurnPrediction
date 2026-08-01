@@ -3,9 +3,10 @@
 [![Python](https://img.shields.io/badge/Python-3.13%2B-blue)]()
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-1.6%2B-orange)]()
 [![XGBoost](https://img.shields.io/badge/XGBoost-2.1%2B-green)]()
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.28%2B-red)]()
 [![License](https://img.shields.io/badge/License-MIT-yellow)]()
 
-Predict customer churn for a telecommunications company using **Random Forest** and **XGBoost** classifiers with SMOTE-balanced training data and SHAP-based model interpretability.
+Predict customer churn for a telecommunications company using **Random Forest** and **XGBoost** classifiers with SMOTE-balanced training data, SHAP-based model interpretability, and an interactive **Streamlit executive dashboard** for analytics, prediction, and business recommendations.
 
 ---
 
@@ -23,6 +24,7 @@ Predict customer churn for a telecommunications company using **Random Forest** 
 
 ```
 .
+├── app.py                                      # Streamlit entry point (Sprint 1 landing page)
 ├── data/
 │   └── WA_Fn-UseC_-Telco-Customer-Churn.csv   # Raw dataset
 ├── models/
@@ -39,6 +41,16 @@ Predict customer churn for a telecommunications company using **Random Forest** 
 │   ├── confusion_matrix.png
 │   ├── shap_bar.png
 │   └── shap_beeswarm.png
+├── dashboard/
+│   ├── app.py                                  # Executive dashboard (Sprint 2, live KPIs)
+│   ├── utils.py                                # Data loading & KPI calculations
+│   ├── prediction.py                           # Model inference, SHAP & recommendations
+│   └── pages/
+│       ├── analytics.py                        # Sprint 3 — interactive Plotly analytics
+│       ├── executive_dashboard.py              # CEO/management business intelligence
+│       ├── prediction_lab.py                   # Single-customer churn prediction
+│       ├── Explainable_AI.py                   # SHAP-based decision reports (PDF export)
+│       └── 💼_Business_Recommendation_Engine.py  # Rule-based action briefs (PDF export)
 ├── requirements.txt
 └── README.md
 ```
@@ -63,7 +75,27 @@ pip install -r requirements.txt
 
 ## Usage
 
-Run the Jupyter notebook end-to-end:
+### Streamlit Dashboard
+
+Launch the interactive dashboard:
+
+```bash
+streamlit run dashboard/app.py
+```
+
+Available views:
+
+| Page | Description |
+|---|---|
+| **Executive Dashboard** | Animated KPIs and key churn insights computed live from the dataset |
+| **Analytics** | Interactive BI dashboard with Plotly visualizations and real-time filters |
+| **Prediction Lab** | Single-customer churn prediction with risk level and top drivers |
+| **Explainable AI** | SHAP-based decision reports with what-if analysis and PDF export |
+| **Business Recommendation Engine** | Rule-based retention action briefs with cost/benefit estimates and PDF export |
+
+### Jupyter Notebook
+
+Run the analysis pipeline end-to-end:
 
 ```bash
 jupyter notebook notebooks/churn_analysis.ipynb
@@ -196,6 +228,10 @@ The top-5 most influential features: **tenure**, **Contract**, **TotalCharges**,
 | SHAP | Model interpretability |
 | joblib | Model serialization |
 | Jupyter | Interactive notebook |
+| Streamlit | Web dashboard framework |
+| Plotly | Interactive BI visualizations |
+| fpdf2 | PDF report export |
+| python-pptx, openpyxl | Export utilities |
 
 ---
 

@@ -4,6 +4,8 @@ Sprint 3: Interactive BI dashboard with Plotly visualizations.
 All metrics update in real time based on sidebar filters.
 """
 
+import theme
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -35,378 +37,11 @@ st.set_page_config(
 
 
 def _inject_css() -> None:
-    """Page-level styles consistent with the landing page dark theme."""
-    st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
-    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
-
-    .stApp { background: #0F3040; }
-
-    .block-container {
-        padding-top: 1.5rem;
-        padding-bottom: 2rem;
-    }
-
-    #MainMenu { visibility: hidden; }
-    footer { visibility: hidden; }
-    .stDeployButton { display: none; }
-
-    .stApp::before {
-        content: '';
-        position: fixed;
-        top: 0; left: 0; right: 0;
-        height: 3px;
-        background: #C8A96B;
-        z-index: 999;
-    }
-
-    @keyframes skeletonPulse {
-        0% { opacity: 0.4; }
-        50% { opacity: 0.8; }
-        100% { opacity: 0.4; }
-    }
-
-    .skeleton {
-        background: #234556;
-        border-radius: 18px;
-        animation: skeletonPulse 1.5s ease-in-out infinite;
-    }
-
-    .skeleton-kpi {
-        height: 130px;
-        margin-bottom: 1rem;
-    }
-
-    .skeleton-chart {
-        height: 420px;
-        margin-bottom: 1rem;
-    }
-
-    .page-header { margin-bottom: 1.5rem; }
-
-    .page-title {
-        font-size: 2.2rem;
-        font-weight: 800;
-        color: #F4F2EE;
-        margin-bottom: 0.25rem;
-        letter-spacing: -0.02em;
-    }
-
-    .page-subtitle {
-        font-size: 1rem;
-        color: #D6D8D8;
-        font-weight: 400;
-    }
-
-    .kpi-card {
-        position: relative;
-        background: #234556;
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 18px;
-        padding: 1.25rem 1rem;
-        text-align: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        height: 100%;
-    }
-
-    .kpi-card::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 1.5rem; right: 1.5rem;
-        height: 3px;
-        background: #C8A96B;
-        border-radius: 0 0 3px 3px;
-    }
-
-    .kpi-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-    }
-
-    .kpi-label {
-        font-size: 0.7rem;
-        font-weight: 500;
-        color: #D6D8D8;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        margin-bottom: 0.35rem;
-    }
-
-    .kpi-value {
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: #F4F2EE;
-        line-height: 1.2;
-    }
-
-    .kpi-value.accent { color: #C8A96B; }
-
-    .kpi-subtext {
-        font-size: 0.6rem;
-        color: #D6D8D8;
-        margin-top: 0.5rem;
-        font-weight: 400;
-        opacity: 0.7;
-    }
-
-    .chart-title {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #F4F2EE;
-        margin-bottom: 0.15rem;
-    }
-
-    .chart-desc {
-        font-size: 0.7rem;
-        color: #D6D8D8;
-        margin-bottom: 0.75rem;
-        opacity: 0.7;
-    }
-
-    .section-header {
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: #F4F2EE;
-        margin-bottom: 0.15rem;
-    }
-
-    .section-sub {
-        font-size: 0.8rem;
-        color: #D6D8D8;
-        margin-bottom: 1rem;
-    }
-
-    .custom-divider {
-        border: none;
-        height: 1px;
-        background: rgba(255,255,255,0.08);
-        margin: 1.5rem 0;
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 3rem 1rem;
-        background: #234556;
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 18px;
-        margin: 1rem 0;
-    }
-
-    .empty-state-icon {
-        font-size: 2rem;
-        color: #C8A96B;
-        margin-bottom: 0.75rem;
-    }
-
-    .empty-state-title {
-        font-size: 1.2rem;
-        font-weight: 600;
-        color: #F4F2EE;
-        margin-bottom: 0.5rem;
-    }
-
-    .empty-state-text {
-        font-size: 0.85rem;
-        color: #D6D8D8;
-        opacity: 0.7;
-    }
-
-    section[data-testid="stSidebar"] {
-        background: #163949;
-        border-right: 1px solid rgba(255,255,255,0.06);
-    }
-
-    section[data-testid="stSidebar"] .stMarkdown {
-        padding: 0 0.5rem;
-    }
-
-    section[data-testid="stSidebar"] .stMultiSelect label,
-    section[data-testid="stSidebar"] .stSelectbox label {
-        color: #C8A96B !important;
-        font-size: 0.75rem !important;
-        font-weight: 600 !important;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-
-    section[data-testid="stSidebar"] .stMultiSelect div[data-baseweb="select"] > div {
-        background: #234556 !important;
-        border: 1px solid rgba(255,255,255,0.08) !important;
-        border-radius: 8px !important;
-        color: #F4F2EE !important;
-    }
-
-    section[data-testid="stSidebar"] .stMultiSelect span {
-        color: #F4F2EE !important;
-    }
-
-    section[data-testid="stSidebar"] [data-baseweb="tag"] {
-        background: #8FA28A !important;
-        color: #0F3040 !important;
-        border-radius: 12px !important;
-    }
-
-    section[data-testid="stSidebar"] [data-baseweb="tag"]:hover {
-        background: #9BCEC1 !important;
-    }
-
-    section[data-testid="stSidebar"] [data-baseweb="tag"] span,
-    section[data-testid="stSidebar"] [data-baseweb="tag"] [aria-label="close"] {
-        color: #0F3040 !important;
-    }
-
-    section[data-testid="stSidebar"] [role="option"]:hover {
-        background: #8FA28A !important;
-    }
-
-    section[data-testid="stSidebar"] [role="option"][aria-selected="true"] {
-        background: #8FA28A !important;
-        color: #0F3040 !important;
-    }
-
-    section[data-testid="stSidebar"] ::-webkit-scrollbar {
-        width: 4px;
-    }
-
-    section[data-testid="stSidebar"] ::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    section[data-testid="stSidebar"] ::-webkit-scrollbar-thumb {
-        background: rgba(255,255,255,0.15);
-        border-radius: 2px;
-    }
-
-    .insight-card {
-        position: relative;
-        background: #234556;
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 18px;
-        padding: 1.25rem;
-        height: 100%;
-    }
-
-    .insight-card::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 1.5rem; right: 1.5rem;
-        height: 2px;
-        background: #C8A96B;
-    }
-
-    .insight-icon {
-        font-size: 1.2rem;
-        color: #8FA28A;
-        margin-bottom: 0.5rem;
-    }
-
-    .insight-title {
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: #F4F2EE;
-        margin-bottom: 0.25rem;
-    }
-
-    .insight-text {
-        font-size: 0.75rem;
-        color: #D6D8D8;
-        line-height: 1.5;
-    }
-
-    .stDataFrame {
-        border-radius: 12px;
-        overflow: hidden;
-        background: transparent;
-    }
-
-    .stDataFrame table {
-        font-size: 0.8rem;
-    }
-
-    .stDataFrame thead th {
-        position: sticky;
-        top: 0;
-        z-index: 1;
-        background: #163949 !important;
-        color: #F4F2EE !important;
-    }
-
-    .stDataFrame tbody tr:nth-child(even) {
-        background: rgba(255,255,255,0.03);
-    }
-
-    .back-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        color: #D6D8D8;
-        text-decoration: none;
-        font-size: 0.85rem;
-        font-weight: 500;
-        padding: 0.4rem 0;
-    }
-
-    .back-link:hover {
-        color: #8FA28A;
-    }
-
-    .stDownloadButton button {
-        background: #C8A96B !important;
-        color: #0F3040 !important;
-        border: none !important;
-        border-radius: 14px !important;
-        padding: 0.5rem 1.5rem !important;
-        font-weight: 600 !important;
-        font-size: 0.85rem !important;
-    }
-
-    .stDownloadButton button:hover {
-        background: #8FA28A !important;
-        color: #0F3040 !important;
-    }
-
-    @media (max-width: 768px) {
-        .page-title { font-size: 1.5rem; }
-        .kpi-value { font-size: 1.3rem; }
-    }
-    </style>
-
-    <script>
-    setTimeout(function() {
-        var els = document.querySelectorAll('.kpi-value[data-value]');
-        els.forEach(function(el) {
-            var target = parseFloat(el.getAttribute('data-value'));
-            if (isNaN(target)) return;
-            var fmt = el.getAttribute('data-format') || 'number';
-            var sfx = el.getAttribute('data-suffix') || '';
-            var dur = 800;
-            var start = null;
-            function tick(ts) {
-                if (!start) start = ts;
-                var p = Math.min((ts - start) / dur, 1);
-                var e = 1 - Math.pow(1 - p, 3);
-                var v = e * target;
-                if (fmt === 'percent') el.textContent = v.toFixed(1) + '%';
-                else if (fmt === 'currency') el.textContent = '$' + v.toFixed(2);
-                else if (fmt === 'suffix') el.textContent = Math.round(v) + sfx;
-                else el.textContent = Math.round(v).toLocaleString();
-                if (p < 1) requestAnimationFrame(tick);
-            }
-            requestAnimationFrame(tick);
-        });
-    }, 150);
-    </script>
-    """, unsafe_allow_html=True)
+    """Inject the shared design-system styles and counter animation JS."""
+    theme.inject_css()
+    theme.inject_kpi_counter()
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# DATA PREP
-# ═══════════════════════════════════════════════════════════════════════════════
-
-
-@st.cache_data
 def _prepare_encoded(df: pd.DataFrame) -> pd.DataFrame:
     """Produce a numeric-encoded copy for correlation heatmap."""
     enc = df.copy()
@@ -438,45 +73,7 @@ def _prepare_encoded(df: pd.DataFrame) -> pd.DataFrame:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-def _dark_template() -> go.layout.Template:
-    """Corporate dark theme for all Plotly charts."""
-    return go.layout.Template(
-        layout=dict(
-            font=dict(family="Inter, sans-serif", size=12, color="#D6D8D8"),
-            title=dict(font=dict(size=15, color="#F4F2EE"), x=0.5),
-            paper_bgcolor="#234556",
-            plot_bgcolor="#234556",
-            height=400,
-            margin=dict(l=50, r=30, t=65, b=50),
-            xaxis=dict(
-                gridcolor="rgba(255,255,255,0.05)",
-                zerolinecolor="rgba(255,255,255,0.05)",
-                tickfont=dict(size=11, color="#D6D8D8"),
-                title=dict(font=dict(size=12, color="#D6D8D8")),
-            ),
-            yaxis=dict(
-                gridcolor="rgba(255,255,255,0.05)",
-                zerolinecolor="rgba(255,255,255,0.05)",
-                tickfont=dict(size=11, color="#D6D8D8"),
-                title=dict(font=dict(size=12, color="#D6D8D8")),
-            ),
-            legend=dict(
-                font=dict(size=11, color="#D6D8D8"),
-                bgcolor="rgba(0,0,0,0)",
-                orientation="h",
-                y=1.12,
-            ),
-            hoverlabel=dict(
-                bgcolor="#234556",
-                font_color="#F4F2EE",
-                font_size=12,
-            ),
-            colorway=["#8FA28A", "#C8A96B", "#9BCEC1", "#D6D8D8"],
-        )
-    )
 
-
-TEMPLATE = _dark_template()
 
 CHURN_COLORS = {"No": "#8FA28A", "Yes": "#C8A96B"}
 
@@ -577,15 +174,11 @@ def _kpi_row(filtered: pd.DataFrame) -> None:
     ]
     for col, (label, value, accent, dv, dfmt, dsuf, sub) in zip(row1, kpi1):
         with col:
-            val_class = "kpi-value accent" if accent else "kpi-value"
-            data_attrs = f' data-value="{dv}" data-format="{dfmt}" data-suffix="{dsuf}"' if dv is not None else ""
-            subtext_html = f'<div class="kpi-subtext">{sub}</div>' if sub else ""
             st.markdown(
-                f'<div class="kpi-card">'
-                f'<div class="kpi-label">{label}</div>'
-                f'<div class="{val_class}"{data_attrs}>{value}</div>'
-                f'{subtext_html}'
-                f"</div>",
+                theme.kpi_card(
+                    label, value, subtext=sub, accent=accent,
+                    data_value=dv, data_format=dfmt, data_suffix=dsuf,
+                ),
                 unsafe_allow_html=True,
             )
 
@@ -597,15 +190,11 @@ def _kpi_row(filtered: pd.DataFrame) -> None:
     ]
     for col, (label, value, accent, dv, dfmt, dsuf, sub) in zip(row2, kpi2):
         with col:
-            val_class = "kpi-value accent" if accent else "kpi-value"
-            data_attrs = f' data-value="{dv}" data-format="{dfmt}" data-suffix="{dsuf}"' if dv is not None else ""
-            subtext_html = f'<div class="kpi-subtext">{sub}</div>' if sub else ""
             st.markdown(
-                f'<div class="kpi-card">'
-                f'<div class="kpi-label">{label}</div>'
-                f'<div class="{val_class}"{data_attrs}>{value}</div>'
-                f'{subtext_html}'
-                f"</div>",
+                theme.kpi_card(
+                    label, value, subtext=sub, accent=accent,
+                    data_value=dv, data_format=dfmt, data_suffix=dsuf,
+                ),
                 unsafe_allow_html=True,
             )
 
@@ -629,7 +218,7 @@ def _churn_donut(df: pd.DataFrame) -> go.Figure:
         textfont_size=12,
         hovertemplate="<b>%{label}</b><br>Count: %{value}<br>%{percent}<extra></extra>",
     )
-    fig.update_layout(template=TEMPLATE)
+    fig.update_layout(template=theme.TEMPLATE)
     return fig
 
 
@@ -645,7 +234,7 @@ def _contract_chart(df: pd.DataFrame) -> go.Figure:
         barmode="group", color_discrete_map=CHURN_COLORS,
         title="Contract Type vs Churn",
     )
-    fig.update_layout(template=TEMPLATE)
+    fig.update_layout(template=theme.TEMPLATE)
     return fig
 
 
@@ -662,7 +251,7 @@ def _internet_chart(df: pd.DataFrame) -> go.Figure:
         color_discrete_map=CHURN_COLORS,
         title="Internet Service vs Churn",
     )
-    fig.update_layout(template=TEMPLATE)
+    fig.update_layout(template=theme.TEMPLATE)
     return fig
 
 
@@ -679,7 +268,7 @@ def _payment_chart(df: pd.DataFrame) -> go.Figure:
         title="Payment Method vs Churn",
     )
     fig.update_layout(
-        template=TEMPLATE,
+        template=theme.TEMPLATE,
         xaxis_tickangle=-30,
     )
     return fig
@@ -693,7 +282,7 @@ def _monthly_hist(df: pd.DataFrame) -> go.Figure:
         title="Monthly Charges Distribution",
     )
     fig.update_layout(
-        template=TEMPLATE,
+        template=theme.TEMPLATE,
         barmode="overlay",
         bargap=0.05,
     )
@@ -709,7 +298,7 @@ def _tenure_hist(df: pd.DataFrame) -> go.Figure:
         title="Tenure Distribution",
     )
     fig.update_layout(
-        template=TEMPLATE,
+        template=theme.TEMPLATE,
         barmode="overlay",
         bargap=0.05,
     )
@@ -731,7 +320,7 @@ def _senior_chart(df: pd.DataFrame) -> go.Figure:
         barmode="group", color_discrete_map=CHURN_COLORS,
         title="Churn by Senior Citizen",
     )
-    fig.update_layout(template=TEMPLATE)
+    fig.update_layout(template=theme.TEMPLATE)
     return fig
 
 
@@ -762,7 +351,7 @@ def _correlation_heatmap(encoded: pd.DataFrame) -> go.Figure:
         ),
     )
     fig.update_layout(
-        template=TEMPLATE,
+        template=theme.TEMPLATE,
         title="Feature Correlation Heatmap",
         height=500,
         xaxis=dict(tickangle=-45, tickfont_size=9),
@@ -1015,12 +604,11 @@ def _export_button(filtered: pd.DataFrame) -> None:
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
         csv = filtered.to_csv(index=False).encode("utf-8")
-        st.download_button(
+        theme.download_button(
             label="📥 Download Filtered Data (CSV)",
             data=csv,
             file_name="telco_churn_filtered.csv",
             mime="text/csv",
-            use_container_width=True,
         )
 
 
@@ -1068,14 +656,11 @@ def main() -> None:
 
     placeholder.empty()
 
-    st.markdown(
-        '<div class="page-header">'
-        '<div class="page-title">Customer Churn Analytics</div>'
-        '<div class="page-subtitle">'
-        "Interactive Business Intelligence Dashboard"
-        "</div>"
-        "</div>",
-        unsafe_allow_html=True,
+    theme.page_header(
+        "Customer Churn Analytics",
+        subtitle="Interactive Business Intelligence Dashboard",
+        rule=False,
+        back_link=False,
     )
 
     filtered = _render_sidebar(df)

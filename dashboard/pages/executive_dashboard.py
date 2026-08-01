@@ -14,6 +14,8 @@ Financial figures that are modeled from the data are clearly labeled
 "Estimated".
 """
 
+import theme
+
 import io
 import os
 import re
@@ -182,415 +184,10 @@ BOARD_SUMMARY = [
 
 
 def _inject_css() -> None:
-    """Executive-grade dark theme consistent with the platform pages."""
-    st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
-    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
-
-    .stApp { background: #0F3040; }
-
-    .block-container {
-        padding-top: 1.25rem;
-        padding-bottom: 2.5rem;
-        max-width: 1680px;
-    }
-
-    #MainMenu { visibility: hidden; }
-    footer { visibility: hidden; }
-    .stDeployButton { display: none; }
-
-    .stApp::before {
-        content: '';
-        position: fixed;
-        top: 0; left: 0; right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #C8A96B, #8FA28A, #C8A96B);
-        z-index: 999;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .back-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        color: #D6D8D8;
-        text-decoration: none;
-        font-size: 0.85rem;
-        font-weight: 500;
-        padding: 0.4rem 0;
-        margin-bottom: 0.75rem;
-    }
-    .back-link:hover { color: #8FA28A; }
-
-    .page-header { margin-bottom: 1.25rem; }
-
-    .page-kicker {
-        font-size: 0.72rem;
-        font-weight: 700;
-        color: #C8A96B;
-        text-transform: uppercase;
-        letter-spacing: 0.16em;
-        margin-bottom: 0.6rem;
-    }
-
-    .page-title {
-        font-size: 2.6rem;
-        font-weight: 800;
-        color: #F4F2EE;
-        margin-bottom: 0.7rem;
-        letter-spacing: -0.025em;
-        line-height: 1.15;
-    }
-
-    .page-subtitle {
-        font-size: 1.0rem;
-        color: #D6D8D8;
-        font-weight: 400;
-        line-height: 1.65;
-        max-width: 860px;
-        margin-bottom: 1rem;
-    }
-
-    .page-rule {
-        width: 88px;
-        height: 4px;
-        border-radius: 2px;
-        background: linear-gradient(90deg, #C8A96B, rgba(200,169,107,0.1));
-    }
-
-    .meta-row { margin-bottom: 1.1rem; }
-    .meta-hint {
-        font-size: 0.78rem;
-        color: #D6D8D8;
-        opacity: 0.8;
-        padding-top: 0.5rem;
-    }
-    .meta-hint b { color: #C8A96B; font-weight: 700; }
-
-    /* ── Section headers ── */
-    .section-head {
-        display: flex;
-        align-items: center;
-        gap: 0.8rem;
-        margin: 1.9rem 0 0.85rem 0;
-    }
-    .sec-num {
-        font-size: 0.78rem;
-        font-weight: 800;
-        color: #0F3040;
-        background: linear-gradient(135deg, #C8A96B, #b09055);
-        border-radius: 9px;
-        padding: 0.3rem 0.5rem;
-        letter-spacing: 0.04em;
-        flex-shrink: 0;
-    }
-    .sec-icon { font-size: 1.15rem; }
-    .sec-title {
-        font-size: 1.05rem;
-        font-weight: 800;
-        color: #F4F2EE;
-        letter-spacing: -0.01em;
-    }
-    .sec-sub {
-        font-size: 0.78rem;
-        color: #D6D8D8;
-        opacity: 0.72;
-        margin-top: 0.15rem;
-    }
-
-    /* ── KPI cards ── */
-    .kpi-card {
-        position: relative;
-        background: #234556;
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 18px;
-        padding: 1.2rem 1rem;
-        text-align: center;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        height: 100%;
-        animation: fadeIn 0.5s ease both;
-    }
-    .kpi-card::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 1.5rem; right: 1.5rem;
-        height: 3px;
-        background: #C8A96B;
-        border-radius: 0 0 3px 3px;
-    }
-    .kpi-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-    }
-    .kpi-label {
-        font-size: 0.68rem;
-        font-weight: 500;
-        color: #D6D8D8;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        margin-bottom: 0.35rem;
-    }
-    .kpi-value {
-        font-size: 1.65rem;
-        font-weight: 700;
-        color: #F4F2EE;
-        line-height: 1.2;
-    }
-    .kpi-value.accent { color: #C8A96B; }
-    .kpi-value.good { color: #8FA28A; }
-    .kpi-value.bad { color: #D97C7C; }
-    .kpi-subtext {
-        font-size: 0.6rem;
-        color: #D6D8D8;
-        margin-top: 0.45rem;
-        font-weight: 400;
-        opacity: 0.75;
-    }
-
-    /* ── Alert cards ── */
-    .alert-card {
-        display: flex;
-        gap: 0.85rem;
-        align-items: flex-start;
-        background: #163949;
-        border: 1px solid rgba(255,255,255,0.07);
-        border-left-width: 4px;
-        border-radius: 14px;
-        padding: 1rem 1.15rem;
-        animation: fadeIn 0.5s ease both;
-    }
-    .alert-icon { font-size: 1.35rem; flex-shrink: 0; }
-    .alert-title { font-size: 0.9rem; font-weight: 700; color: #F4F2EE; margin-bottom: 0.3rem; }
-    .alert-text { font-size: 0.78rem; color: #D6D8D8; opacity: 0.88; line-height: 1.55; }
-    .alert-pill {
-        display: inline-block;
-        font-size: 0.6rem;
-        font-weight: 800;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: #0F3040;
-        border-radius: 100px;
-        padding: 0.18rem 0.55rem;
-        margin-bottom: 0.4rem;
-    }
-
-    /* ── Segment cards ── */
-    .seg-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
-        gap: 1rem;
-    }
-    .seg-card {
-        background: #163949;
-        border: 1px solid rgba(255,255,255,0.06);
-        border-radius: 14px;
-        padding: 1.15rem 1rem;
-        text-align: center;
-        transition: transform 0.25s ease, border-color 0.25s ease;
-        animation: fadeIn 0.5s ease both;
-    }
-    .seg-card:hover { transform: translateY(-3px); border-color: rgba(200,169,107,0.4); }
-    .seg-icon { font-size: 1.6rem; }
-    .seg-name { font-size: 0.95rem; font-weight: 800; color: #F4F2EE; margin: 0.35rem 0 0.25rem; }
-    .seg-count { font-size: 1.5rem; font-weight: 800; color: #C8A96B; }
-    .seg-share { font-size: 0.68rem; color: #D6D8D8; opacity: 0.75; margin-bottom: 0.4rem; }
-    .seg-desc { font-size: 0.72rem; color: #D6D8D8; opacity: 0.85; line-height: 1.5; }
-
-    /* ── Department cards ── */
-    .dep-card {
-        background: #163949;
-        border: 1px solid rgba(255,255,255,0.06);
-        border-radius: 14px;
-        padding: 1.05rem 1.15rem;
-        height: 100%;
-        animation: fadeIn 0.5s ease both;
-    }
-    .dep-head { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem; }
-    .dep-icon { font-size: 1.25rem; }
-    .dep-name { font-size: 0.92rem; font-weight: 700; color: #F4F2EE; }
-    .dep-status {
-        margin-left: auto;
-        font-size: 0.6rem;
-        font-weight: 800;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        color: #0F3040;
-        border-radius: 100px;
-        padding: 0.18rem 0.55rem;
-    }
-    .dep-kpi-label { font-size: 0.62rem; color: #C8A96B; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.2rem; }
-    .dep-kpi { font-size: 0.9rem; font-weight: 700; color: #F4F2EE; margin-bottom: 0.55rem; }
-    .dep-action { font-size: 0.75rem; color: #D6D8D8; opacity: 0.88; line-height: 1.55; }
-
-    /* ── Opportunity rows ── */
-    .opp-card {
-        background: #163949;
-        border: 1px solid rgba(255,255,255,0.06);
-        border-left-width: 3px;
-        border-radius: 12px;
-        padding: 0.85rem 1.1rem;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        flex-wrap: wrap;
-        animation: fadeIn 0.5s ease both;
-    }
-    .opp-rank {
-        width: 30px; height: 30px;
-        border-radius: 50%;
-        background: #234556;
-        border: 1px solid rgba(200,169,107,0.35);
-        color: #C8A96B;
-        font-weight: 800;
-        font-size: 0.78rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-    .opp-title { font-size: 0.88rem; font-weight: 700; color: #F4F2EE; margin-bottom: 0.15rem; }
-    .opp-desc { font-size: 0.74rem; color: #D6D8D8; opacity: 0.82; line-height: 1.5; }
-    .opp-meta { margin-left: auto; display: flex; gap: 1.4rem; flex-shrink: 0; }
-    .opp-meta-item { text-align: right; }
-    .opp-meta-label { font-size: 0.6rem; color: #D6D8D8; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.06em; }
-    .opp-meta-value { font-size: 0.85rem; font-weight: 700; color: #C8A96B; }
-
-    /* ── Roadmap ── */
-    .rm-card {
-        background: #163949;
-        border: 1px solid rgba(255,255,255,0.06);
-        border-top-width: 3px;
-        border-radius: 14px;
-        padding: 1.15rem 1.2rem;
-        height: 100%;
-        animation: fadeIn 0.5s ease both;
-    }
-    .rm-head { display: flex; align-items: baseline; gap: 0.55rem; margin-bottom: 0.7rem; }
-    .rm-phase { font-size: 1rem; font-weight: 800; color: #F4F2EE; }
-    .rm-horizon { font-size: 0.72rem; color: #C8A96B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
-    .rm-item {
-        display: flex; gap: 0.55rem;
-        font-size: 0.78rem; color: #D6D8D8;
-        line-height: 1.5; margin-bottom: 0.45rem;
-    }
-    .rm-item span { color: #C8A96B; flex-shrink: 0; }
-    .rm-outcome { font-size: 0.76rem; color: #9BCEC1; font-weight: 600; margin: 0.5rem 0 0.6rem; line-height: 1.5; }
-    .rm-owner { font-size: 0.68rem; color: #D6D8D8; opacity: 0.7; }
-
-    /* ── Insight cards ── */
-    .insight-card {
-        position: relative;
-        background: #234556;
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 18px;
-        padding: 1.2rem 1.25rem;
-        height: 100%;
-        animation: fadeIn 0.5s ease both;
-    }
-    .insight-icon { font-size: 1.5rem; margin-bottom: 0.6rem; }
-    .insight-title { font-size: 0.88rem; font-weight: 700; color: #F4F2EE; margin-bottom: 0.35rem; line-height: 1.4; }
-    .insight-text { font-size: 0.76rem; color: #D6D8D8; opacity: 0.88; line-height: 1.6; }
-
-    /* ── Narrative / notes ── */
-    .notes-box { font-size: 0.95rem; color: #F4F2EE; line-height: 1.9; }
-    .notes-box b { color: #C8A96B; font-weight: 700; }
-    .note-text {
-        font-size: 0.76rem;
-        color: #D6D8D8;
-        opacity: 0.72;
-        line-height: 1.6;
-        margin-top: 0.7rem;
-    }
-    .board-item { font-size: 0.82rem; color: #D6D8D8; line-height: 1.65; margin-bottom: 0.6rem; }
-
-    /* ── Expander ── */
-    [data-testid="stExpander"] {
-        background: #1f3d4d;
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 16px;
-    }
-    [data-testid="stExpander"] summary { color: #F4F2EE; font-weight: 600; font-size: 0.92rem; }
-
-    /* ── Download buttons ── */
-    .stDownloadButton button {
-        width: 100% !important;
-        min-height: 46px !important;
-        border-radius: 14px !important;
-        font-size: 0.95rem !important;
-        font-weight: 700 !important;
-        letter-spacing: 0.01em;
-        color: #0F3040 !important;
-        background: linear-gradient(135deg, #C8A96B 0%, #b09055 100%) !important;
-        border: none !important;
-        box-shadow: 0 6px 18px rgba(200,169,107,0.22) !important;
-        transition: all 0.25s ease !important;
-    }
-    .stDownloadButton button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 12px 30px rgba(200,169,107,0.38) !important;
-        background: linear-gradient(135deg, #d4b678 0%, #C8A96B 100%) !important;
-    }
-
-    @media (max-width: 768px) {
-        .page-title { font-size: 1.7rem; }
-        .kpi-value { font-size: 1.25rem; }
-        .opp-meta { margin-left: 0; width: 100%; }
-        .block-container { padding-left: 1rem; padding-right: 1rem; }
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    """Inject the shared design-system styles."""
+    theme.inject_css()
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# PLOTLY TEMPLATE
-# ═══════════════════════════════════════════════════════════════════════════════
-
-
-def _dark_template() -> go.layout.Template:
-    """Corporate dark theme for all Plotly charts."""
-    return go.layout.Template(
-        layout=dict(
-            font=dict(family="Inter, sans-serif", size=12, color="#D6D8D8"),
-            title=dict(font=dict(size=15, color="#F4F2EE"), x=0.5),
-            paper_bgcolor="#234556",
-            plot_bgcolor="#234556",
-            height=400,
-            margin=dict(l=50, r=30, t=65, b=50),
-            xaxis=dict(
-                gridcolor="rgba(255,255,255,0.05)",
-                zerolinecolor="rgba(255,255,255,0.05)",
-                tickfont=dict(size=11, color="#D6D8D8"),
-                title=dict(font=dict(size=12, color="#D6D8D8")),
-            ),
-            yaxis=dict(
-                gridcolor="rgba(255,255,255,0.05)",
-                zerolinecolor="rgba(255,255,255,0.05)",
-                tickfont=dict(size=11, color="#D6D8D8"),
-                title=dict(font=dict(size=12, color="#D6D8D8")),
-            ),
-            legend=dict(
-                font=dict(size=11, color="#D6D8D8"),
-                bgcolor="rgba(0,0,0,0)",
-                orientation="h",
-                y=1.12,
-            ),
-            hoverlabel=dict(
-                bgcolor="#234556",
-                font_color="#F4F2EE",
-                font_size=12,
-            ),
-            colorway=["#8FA28A", "#C8A96B", "#9BCEC1", "#D6D8D8"],
-        )
-    )
-
-
-TEMPLATE = _dark_template()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -999,29 +596,13 @@ def _build_metrics(df: pd.DataFrame) -> dict:
 
 
 def _section_head(num: str, icon: str, title: str, sub: str) -> None:
-    """Numbered section header used across the 15-part dashboard."""
-    st.markdown(
-        f'<div class="section-head">'
-        f'<span class="sec-num">{num}</span>'
-        f'<span class="sec-icon">{icon}</span>'
-        f'<div><div class="sec-title">{title}</div>'
-        f'<div class="sec-sub">{sub}</div></div>'
-        f"</div>",
-        unsafe_allow_html=True,
-    )
+    """Numbered section header — delegates to the shared design system."""
+    st.markdown(theme.section_head(num, icon, title, sub), unsafe_allow_html=True)
 
 
 def _metric_tile(label: str, value: str, sub: str = "", cls: str = "") -> str:
-    """HTML for an Analytics-style KPI metric tile."""
-    val_class = f"kpi-value {cls}".strip() if cls else "kpi-value"
-    subtext_html = f'<div class="kpi-subtext">{sub}</div>' if sub else ""
-    return (
-        f'<div class="kpi-card">'
-        f'<div class="kpi-label">{label}</div>'
-        f'<div class="{val_class}">{value}</div>'
-        f"{subtext_html}"
-        f"</div>"
-    )
+    """KPI metric tile — delegates to the shared design system."""
+    return theme.kpi_card(label, value, subtext=sub, cls=cls)
 
 
 def _kpi_row(metrics: dict, tiles: list) -> None:
@@ -1039,18 +620,16 @@ def _header(metrics: dict) -> None:
         "← Back to Dashboard</a>",
         unsafe_allow_html=True,
     )
-    st.markdown(
-        '<div class="page-header">'
-        '<div class="page-kicker">◆ Executive Dashboard</div>'
-        '<div class="page-title">The Churn Business at a Glance</div>'
-        '<div class="page-subtitle">'
-        "A management-level overview of what is happening across the customer "
-        "base, why it is happening, and what to do about it — built entirely "
-        "from the customer dataset with no simulated numbers."
-        "</div>"
-        '<div class="page-rule"></div>'
-        "</div>",
-        unsafe_allow_html=True,
+    theme.page_header(
+        title="The Churn Business at a Glance",
+        kicker="◆ Executive Dashboard",
+        subtitle=(
+            "A management-level overview of what is happening across the customer "
+            "base, why it is happening, and what to do about it — built entirely "
+            "from the customer dataset with no simulated numbers."
+        ),
+        rule=True,
+        back_link=True,
     )
     st.markdown(
         '<div class="meta-row">'
@@ -1065,13 +644,7 @@ def _header(metrics: dict) -> None:
 
 def _chart(title: str, desc: str, fig: go.Figure) -> None:
     """Wrap a Plotly figure with a title and description."""
-    st.markdown(
-        f'<div class="chart-title" style="font-size:0.85rem;font-weight:600;'
-        f'color:#F4F2EE;margin-bottom:0.15rem;">{title}</div>'
-        f'<div class="chart-desc" style="font-size:0.7rem;color:#D6D8D8;'
-        f'margin-bottom:0.6rem;opacity:0.72;">{desc}</div>',
-        unsafe_allow_html=True,
-    )
+    theme.figure_container(title, desc)
     st.plotly_chart(fig, width="stretch")
 
 
@@ -1118,36 +691,8 @@ def _executive_kpis(metrics: dict) -> None:
 
 
 def _gauge(value: float, color: str, title: str) -> go.Figure:
-    """Plotly gauge for a single 0-100 business score."""
-    fig = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=value,
-        number={"font": {"color": "#F4F2EE", "size": 30}},
-        title={"text": title, "font": {"color": "#C8A96B", "size": 13}},
-        gauge={
-            "shape": "angular",
-            "axis": {
-                "range": [0, 100],
-                "tickcolor": "#D6D8D8",
-                "tickfont": {"color": "#D6D8D8", "size": 9},
-            },
-            "bar": {"color": color, "thickness": 0.3},
-            "bgcolor": "rgba(0,0,0,0)",
-            "borderwidth": 0,
-            "steps": [
-                {"range": [0, 40], "color": "rgba(217,124,124,0.18)"},
-                {"range": [40, 70], "color": "rgba(200,169,107,0.22)"},
-                {"range": [70, 100], "color": "rgba(143,162,138,0.26)"},
-            ],
-        },
-    ))
-    fig.update_layout(
-        height=260,
-        margin=dict(t=50, b=10, l=15, r=15),
-        paper_bgcolor="rgba(0,0,0,0)",
-        font={"family": "Inter, sans-serif"},
-    )
-    return fig
+    """Plotly gauge — delegates to the shared design system."""
+    return theme.gauge_figure(value, color, title)
 
 
 def _health_score(metrics: dict) -> None:
@@ -1222,7 +767,7 @@ def _revenue_charts(df: pd.DataFrame, m: dict) -> None:
                       "<br>Customers: %{customdata[0]:,}"
                       "<br>Churn rate: %{customdata[1]:.1f}%<extra></extra>",
     )
-    fig1.update_layout(template=TEMPLATE)
+    fig1.update_layout(template=theme.TEMPLATE)
     _chart("Monthly Revenue by Tenure Cohort", "Distribution of MRR across tenure bands",
            fig1)
 
@@ -1235,7 +780,7 @@ def _revenue_charts(df: pd.DataFrame, m: dict) -> None:
     fig2.update_traces(
         hovertemplate="<b>%{x}</b><br>Revenue: $%{y:,.0f}<extra></extra>",
     )
-    fig2.update_layout(template=TEMPLATE, xaxis_tickangle=-20)
+    fig2.update_layout(template=theme.TEMPLATE, xaxis_tickangle=-20)
     _chart("Revenue by Contract", "Monthly revenue contribution per contract term",
            fig2)
 
@@ -1248,7 +793,7 @@ def _revenue_charts(df: pd.DataFrame, m: dict) -> None:
     fig3.update_traces(
         hovertemplate="<b>%{x}</b><br>Revenue: $%{y:,.0f}<extra></extra>",
     )
-    fig3.update_layout(template=TEMPLATE, xaxis_tickangle=-20)
+    fig3.update_layout(template=theme.TEMPLATE, xaxis_tickangle=-20)
     _chart("Revenue by Internet Service", "Fiber carries the majority of revenue",
            fig3)
 
@@ -1261,7 +806,7 @@ def _revenue_charts(df: pd.DataFrame, m: dict) -> None:
     fig4.update_traces(
         hovertemplate="<b>%{x}</b><br>Revenue: $%{y:,.0f}<extra></extra>",
     )
-    fig4.update_layout(template=TEMPLATE, xaxis_tickangle=-25)
+    fig4.update_layout(template=theme.TEMPLATE, xaxis_tickangle=-25)
     _chart("Revenue by Payment Method", "Monthly revenue per billing channel",
            fig4)
 
@@ -1282,7 +827,7 @@ def _revenue_charts(df: pd.DataFrame, m: dict) -> None:
     fig5.update_traces(
         hovertemplate="<b>%{y}</b><br>Estimated annual loss: $%{x:,.0f}<extra></extra>",
     )
-    fig5.update_layout(template=TEMPLATE)
+    fig5.update_layout(template=theme.TEMPLATE)
     _chart("Revenue Lost Due to Churn (Estimated)",
            "Annualized churned MRR by contract term", fig5)
 
@@ -1293,7 +838,7 @@ def _revenue_charts(df: pd.DataFrame, m: dict) -> None:
         hovertemplate="<b>%{x}</b><br>Estimated annual revenue: $%{y:,.0f}<extra></extra>",
     ))
     fig6.update_layout(
-        template=TEMPLATE,
+        template=theme.TEMPLATE,
         title="Revenue Retained vs At Risk (Estimated)",
         yaxis_title="Annualized revenue (USD)",
     )
@@ -1320,7 +865,7 @@ def _rate_bar(labels: list, values: list, title: str, color: str = "#C8A96B") ->
         hovertemplate="<b>%{x}</b><br>Churn rate: %{y:.1f}%<extra></extra>",
     ))
     fig.update_layout(
-        template=TEMPLATE,
+        template=theme.TEMPLATE,
         title=title,
         yaxis_title="Churn rate (%)",
     )
@@ -1338,7 +883,7 @@ def _churn_charts(df: pd.DataFrame, m: dict) -> None:
         hovertemplate="<b>%{x} months</b><br>Churn rate: %{y:.1f}%<extra></extra>",
     ))
     fig1.update_layout(
-        template=TEMPLATE,
+        template=theme.TEMPLATE,
         title="Monthly Churn Trend by Tenure Cohort (Proxy)",
         yaxis_title="Churn rate (%)",
     )
@@ -1435,7 +980,7 @@ def _geo_chart(data: pd.Series, title: str, color: str) -> go.Figure:
     fig.update_traces(
         hovertemplate="<b>%{x}</b><br>Customers: %{y:,}<extra></extra>",
     )
-    fig.update_layout(template=TEMPLATE, xaxis_tickangle=-20)
+    fig.update_layout(template=theme.TEMPLATE, xaxis_tickangle=-20)
     return fig
 
 
@@ -1486,13 +1031,7 @@ def _alerts(m: dict) -> None:
     for severity, icon, title, text in sorted_alerts:
         color = SEVERITY_COLORS[severity]
         st.markdown(
-            f'<div class="alert-card" style="border-left-color:{color};">'
-            f'<div class="alert-icon">{icon}</div>'
-            f'<div>'
-            f'<span class="alert-pill" style="background:{color}">{severity}</span>'
-            f'<div class="alert-title">{title}</div>'
-            f'<div class="alert-text">{text}</div>'
-            f"</div></div>",
+            theme.alert_card(severity, icon, title, text, color),
             unsafe_allow_html=True,
         )
 
@@ -1571,10 +1110,7 @@ def _opportunities(m: dict) -> None:
 def _executive_summary(m: dict) -> None:
     """Auto-generated one-paragraph executive narrative."""
     with st.container(border=True):
-        st.markdown(
-            f'<div class="notes-box">{m["summary"]}</div>',
-            unsafe_allow_html=True,
-        )
+        st.markdown(theme.note(m["summary"]), unsafe_allow_html=True)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -2023,12 +1559,11 @@ def _export_section(m: dict) -> None:
     with c1:
         try:
             pdf_bytes = _build_pdf(m)
-            st.download_button(
+            theme.download_button(
                 "📄 Download Executive Report (PDF)",
                 data=pdf_bytes,
                 file_name="executive_dashboard_report.pdf",
                 mime="application/pdf",
-                width="stretch",
                 key="exec_pdf_download",
             )
         except Exception:
@@ -2039,29 +1574,27 @@ def _export_section(m: dict) -> None:
 
     with c2:
         kpi_csv = _kpi_frame(m).to_csv(index=False).encode("utf-8")
-        st.download_button(
+        theme.download_button(
             "📊 Download KPI Dashboard (CSV)",
             data=kpi_csv,
             file_name="executive_kpi_dashboard.csv",
             mime="text/csv",
-            width="stretch",
             key="exec_csv_download",
         )
 
     with c3:
-        st.download_button(
+        theme.download_button(
             "📝 Download Business Summary (TXT)",
             data=_build_summary_text(m).encode("utf-8"),
             file_name="executive_business_summary.txt",
             mime="text/plain",
-            width="stretch",
             key="exec_txt_download",
         )
 
     with c4:
         try:
             pptx_bytes = _build_pptx(m)
-            st.download_button(
+            theme.download_button(
                 "📽️ Download Board Briefing (PPTX)",
                 data=pptx_bytes,
                 file_name="executive_board_briefing.pptx",
@@ -2069,7 +1602,6 @@ def _export_section(m: dict) -> None:
                     "application/vnd.openxmlformats-officedocument."
                     "presentationml.presentation"
                 ),
-                width="stretch",
                 key="exec_pptx_download",
             )
         except Exception:
