@@ -1,4 +1,5 @@
 streamlit>=1.28.0
+plotly
 pandas
 numpy
 matplotlib
@@ -11,3 +12,5 @@ joblib
 jupyter
 ipykernel
 openpyxl
+fpdf2
+python-pptx

@@ -38,46 +38,39 @@ st.set_page_config(
 
 
 def _inject_css() -> None:
-    """Inject global styles, fonts, and animations."""
+    """Inject global styles, fonts, animations, and counter JS."""
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
     * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
 
-    .stApp { background: #08080f; }
+    .stApp { background: #0F3040; }
 
     .block-container {
         padding-top: 2rem;
         padding-bottom: 2rem;
-        max-width: 1200px;
     }
 
-    /* ── Accent bar ── */
     .stApp::before {
         content: '';
         position: fixed;
         top: 0; left: 0; right: 0;
         height: 3px;
-        background: linear-gradient(90deg, #3b82f6, #60a5fa, #3b82f6);
+        background: #C8A96B;
         z-index: 999;
     }
 
-    /* ── Hide Streamlit chrome ── */
     #MainMenu { visibility: hidden; }
     footer { visibility: hidden; }
     .stDeployButton { display: none; }
 
-    /* ── Header ── */
-    .header-container { text-align: center; padding: 2rem 0 0.5rem 0; }
+    .header-container { text-align: center; padding: 2.5rem 0 1rem 0; }
 
     .header-title {
         font-size: 2.8rem;
         font-weight: 800;
-        background: linear-gradient(135deg, #f8fafc 0%, #60a5fa 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: #F4F2EE;
         margin-bottom: 0.5rem;
         letter-spacing: -0.02em;
         line-height: 1.2;
@@ -85,12 +78,11 @@ def _inject_css() -> None:
 
     .header-subtitle {
         font-size: 1.1rem;
-        color: #64748b;
+        color: #D6D8D8;
         font-weight: 400;
         margin-bottom: 1.5rem;
     }
 
-    /* ── Badges ── */
     .badge-container {
         display: flex;
         justify-content: center;
@@ -103,43 +95,75 @@ def _inject_css() -> None:
     .badge {
         display: inline-flex;
         align-items: center;
-        padding: 0.35rem 1rem;
+        padding: 0.3rem 1rem;
         border-radius: 100px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        letter-spacing: 0.01em;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        font-size: 0.75rem;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        border: 1px solid rgba(255,255,255,0.08);
     }
 
-    /* ── Keyframes ── */
-    @keyframes fadeSlideUp {
-        0% { opacity: 0; transform: translateY(24px); }
-        100% { opacity: 1; transform: translateY(0); }
+    @keyframes fadeIn {
+        0% { opacity: 0; }
+        100% { opacity: 1; }
     }
 
-    /* ── KPI Cards ── */
+    @keyframes skeletonPulse {
+        0% { opacity: 0.4; }
+        50% { opacity: 0.8; }
+        100% { opacity: 0.4; }
+    }
+
+    .skeleton {
+        background: #234556;
+        border-radius: 18px;
+        animation: skeletonPulse 1.5s ease-in-out infinite;
+    }
+
+    .skeleton-kpi {
+        height: 130px;
+        margin-bottom: 1rem;
+    }
+
+    .skeleton-header {
+        height: 80px;
+        margin-bottom: 2rem;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
     .kpi-card {
-        background: linear-gradient(145deg, #14142a 0%, #1a1a35 100%);
-        border: 1px solid rgba(59, 130, 246, 0.1);
-        border-radius: 16px;
+        position: relative;
+        background: #234556;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 18px;
         padding: 1.5rem 1rem;
         text-align: center;
-        animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        animation: fadeIn 0.5s ease forwards;
         opacity: 0;
-        transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         height: 100%;
     }
 
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 1.5rem; right: 1.5rem;
+        height: 3px;
+        background: #C8A96B;
+        border-radius: 0 0 3px 3px;
+    }
+
     .kpi-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 40px rgba(59, 130, 246, 0.12);
-        border-color: rgba(59, 130, 246, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.2);
     }
 
     .kpi-label {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         font-weight: 500;
-        color: #64748b;
+        color: #D6D8D8;
         text-transform: uppercase;
         letter-spacing: 0.06em;
         margin-bottom: 0.5rem;
@@ -147,69 +171,80 @@ def _inject_css() -> None:
 
     .kpi-value {
         font-size: 2.2rem;
-        font-weight: 800;
-        color: #f8fafc;
+        font-weight: 700;
+        color: #F4F2EE;
         line-height: 1.2;
     }
 
-    .kpi-value.accent { color: #3b82f6; }
+    .kpi-value.accent { color: #C8A96B; }
 
-    /* ── Section headers ── */
+    .kpi-subtext {
+        font-size: 0.6rem;
+        color: #D6D8D8;
+        margin-top: 0.5rem;
+        font-weight: 400;
+        opacity: 0.7;
+    }
+
     .section-header {
         font-size: 1.5rem;
         font-weight: 700;
-        color: #f8fafc;
+        color: #F4F2EE;
         margin-bottom: 0.25rem;
     }
 
     .section-sub {
         font-size: 0.85rem;
-        color: #475569;
+        color: #D6D8D8;
         margin-bottom: 1.5rem;
     }
 
-    /* ── Insight Cards ── */
     .insight-card {
-        background: linear-gradient(145deg, #14142a 0%, #1a1a35 100%);
-        border: 1px solid rgba(59, 130, 246, 0.08);
-        border-radius: 14px;
+        position: relative;
+        background: #234556;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 18px;
         padding: 1.5rem;
-        animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        animation: fadeIn 0.5s ease forwards;
         opacity: 0;
-        transition: transform 0.3s ease, border-color 0.3s ease;
         height: 100%;
     }
 
-    .insight-card:hover {
-        transform: translateY(-2px);
-        border-color: rgba(59, 130, 246, 0.25);
+    .insight-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 1.5rem; right: 1.5rem;
+        height: 2px;
+        background: #C8A96B;
     }
 
-    .insight-icon { font-size: 1.8rem; margin-bottom: 0.75rem; }
+    .insight-icon {
+        font-size: 1.2rem;
+        color: #8FA28A;
+        margin-bottom: 0.75rem;
+    }
 
     .insight-title {
         font-size: 0.85rem;
         font-weight: 600;
-        color: #f8fafc;
+        color: #F4F2EE;
         margin-bottom: 0.35rem;
         line-height: 1.4;
     }
 
     .insight-text {
         font-size: 0.8rem;
-        color: #64748b;
+        color: #D6D8D8;
         line-height: 1.5;
     }
 
-    /* ── Dividers ── */
     .custom-divider {
         border: none;
         height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.15), transparent);
+        background: rgba(255,255,255,0.08);
         margin: 2.5rem 0;
     }
 
-    /* ── Action buttons ── */
     .action-btn-container {
         display: flex;
         justify-content: center;
@@ -223,65 +258,80 @@ def _inject_css() -> None:
         align-items: center;
         gap: 0.5rem;
         padding: 0.8rem 2rem;
-        border-radius: 10px;
-        font-size: 0.95rem;
+        border-radius: 14px;
+        font-size: 0.9rem;
         font-weight: 600;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
         text-decoration: none;
     }
 
     .btn-primary {
-        background: linear-gradient(135deg, #3b82f6, #2563eb);
-        color: #fff;
-        box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+        background: #C8A96B;
+        color: #0F3040;
         cursor: pointer;
-    }
-
-    .btn-secondary {
-        cursor: default;
+        border: none;
     }
 
     .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
+        background: #8FA28A;
     }
 
     .btn-secondary {
         background: transparent;
-        color: #94a3b8;
-        border: 1px solid rgba(148, 163, 184, 0.2);
+        color: #D6D8D8;
+        border: 1px solid rgba(255,255,255,0.08);
+        cursor: default;
     }
 
-    .btn-secondary:hover {
-        border-color: rgba(59, 130, 246, 0.4);
-        color: #f8fafc;
-        transform: translateY(-2px);
+    .nav-btn-wrapper a {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+        padding: 0.8rem 2rem !important;
+        border-radius: 14px !important;
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+        background: #C8A96B !important;
+        color: #0F3040 !important;
+        text-decoration: none !important;
+        cursor: pointer !important;
+        border: none !important;
+        justify-content: center !important;
+        width: 100% !important;
     }
 
-    /* ── Footer ── */
+    .nav-btn-wrapper a:hover {
+        background: #8FA28A !important;
+        color: #0F3040 !important;
+    }
+
     .footer {
         text-align: center;
-        padding: 2.5rem 0 1rem 0;
-        border-top: 1px solid rgba(148, 163, 184, 0.08);
+        padding: 2rem 0 1rem 0;
+        border-top: 1px solid rgba(255,255,255,0.06);
         margin-top: 1rem;
     }
 
     .footer-title {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #f8fafc;
-        margin-bottom: 0.25rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #D6D8D8;
+        margin-bottom: 0.3rem;
     }
 
-    .footer-sub {
-        font-size: 0.8rem;
-        color: #475569;
+    .footer-info {
+        font-size: 0.7rem;
+        color: rgba(255,255,255,0.35);
+        line-height: 1.6;
     }
 
-    /* ── Sidebar ── */
+    .footer-info span {
+        margin: 0 0.5rem;
+        opacity: 0.5;
+    }
+
     section[data-testid="stSidebar"] {
-        background: #0c0c1a;
-        border-right: 1px solid rgba(59, 130, 246, 0.08);
+        background: #163949;
+        border-right: 1px solid rgba(255,255,255,0.06);
     }
 
     section[data-testid="stSidebar"] .stMarkdown {
@@ -289,45 +339,70 @@ def _inject_css() -> None:
     }
 
     .sidebar-title {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         font-weight: 700;
-        color: #f8fafc;
+        color: #F4F2EE;
         padding: 1.5rem 0 0.5rem 0;
     }
 
     .sidebar-section { margin-bottom: 1.25rem; }
 
     .sidebar-label {
-        font-size: 0.65rem;
+        font-size: 0.6rem;
         font-weight: 600;
-        color: #475569;
+        color: #C8A96B;
         text-transform: uppercase;
         letter-spacing: 0.08em;
         margin-bottom: 0.3rem;
     }
 
     .sidebar-value {
-        font-size: 0.9rem;
-        color: #cbd5e1;
+        font-size: 0.85rem;
+        color: #D6D8D8;
         line-height: 1.4;
     }
 
-    .sidebar-value.muted { color: #475569; }
+    .sidebar-value.muted { color: rgba(255,255,255,0.3); }
 
     .sidebar-divider {
         border: none;
         height: 1px;
-        background: rgba(148, 163, 184, 0.08);
+        background: rgba(255,255,255,0.06);
         margin: 1.25rem 0;
     }
 
-    /* ── Responsive ── */
     @media (max-width: 768px) {
         .header-title { font-size: 1.8rem; }
         .kpi-value { font-size: 1.5rem; }
         .action-btn-container { flex-direction: column; align-items: center; }
     }
     </style>
+
+    <script>
+    setTimeout(function() {
+        var els = document.querySelectorAll('.kpi-value[data-value]');
+        els.forEach(function(el) {
+            var target = parseFloat(el.getAttribute('data-value'));
+            if (isNaN(target)) return;
+            var fmt = el.getAttribute('data-format') || 'number';
+            var sfx = el.getAttribute('data-suffix') || '';
+            var dur = 800;
+            var start = null;
+            function tick(ts) {
+                if (!start) start = ts;
+                var p = Math.min((ts - start) / dur, 1);
+                var e = 1 - Math.pow(1 - p, 3);
+                var v = e * target;
+                if (fmt === 'percent') el.textContent = v.toFixed(1) + '%';
+                else if (fmt === 'currency') el.textContent = '$' + v.toFixed(2);
+                else if (fmt === 'suffix') el.textContent = Math.round(v) + sfx;
+                else el.textContent = Math.round(v).toLocaleString();
+                if (p < 1) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+        });
+    }, 150);
+    </script>
     """, unsafe_allow_html=True)
 
 
@@ -344,13 +419,20 @@ def _badge(name: str, color: str) -> str:
     )
 
 
-def _kpi_card(title: str, value: str, delay: float, accent: bool = False) -> str:
-    """Return HTML for an animated KPI metric card."""
+def _kpi_card(title: str, value: str, delay: float, accent: bool = False,
+              data_value: float | None = None, data_format: str = "number",
+              data_suffix: str = "", subtext: str = "") -> str:
+    """Return HTML for an animated KPI metric card with counter animation support."""
     val_class = "kpi-value accent" if accent else "kpi-value"
+    data_attrs = ""
+    if data_value is not None:
+        data_attrs = f' data-value="{data_value}" data-format="{data_format}" data-suffix="{data_suffix}"'
+    subtext_html = f'<div class="kpi-subtext">{subtext}</div>' if subtext else ""
     return (
         f'<div class="kpi-card" style="animation-delay:{delay}s">'
         f'<div class="kpi-label">{title}</div>'
-        f'<div class="{val_class}">{value}</div>'
+        f'<div class="{val_class}"{data_attrs}>{value}</div>'
+        f'{subtext_html}'
         f'</div>'
     )
 
@@ -374,7 +456,7 @@ def _insight_card(icon: str, title: str, desc: str, delay: float) -> str:
 def _sidebar(total_customers: int) -> None:
     """Collapsible sidebar with project metadata."""
     with st.sidebar:
-        st.markdown('<div class="sidebar-title">ℹ️ Project Info</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sidebar-title">Project Info</div>', unsafe_allow_html=True)
         st.markdown('<hr class="sidebar-divider">', unsafe_allow_html=True)
 
         fields = [
@@ -418,12 +500,12 @@ def _header() -> None:
     )
 
     badges = [
-        ("Python", "#3776AB"),
-        ("XGBoost", "#289639"),
-        ("Random Forest", "#FF6F00"),
-        ("SHAP", "#7C3AED"),
-        ("SQLite", "#003B57"),
-        ("Pandas", "#130654"),
+        ("Python", "#234556"),
+        ("XGBoost", "#234556"),
+        ("Random Forest", "#234556"),
+        ("SHAP", "#234556"),
+        ("SQLite", "#234556"),
+        ("Pandas", "#234556"),
     ]
     badges_html = '<div class="badge-container">' + "".join(
         _badge(name, color) for name, color in badges
@@ -445,32 +527,28 @@ def _kpi_section(
     st.markdown('<hr class="custom-divider">', unsafe_allow_html=True)
 
     row1 = st.columns(3, gap="medium")
-    for col, (title, value, delay, accent) in zip(
-        row1,
-        [
-            ("Total Customers", f"{total_customers:,}", 0.1, False),
-            ("Churn Rate", f"{churn_rate}%", 0.2, False),
-            ("Average Tenure", f"{avg_tenure} mo", 0.3, False),
-        ],
-    ):
+    kpi1_data = [
+        ("Total Customers", f"{total_customers:,}", 0.1, False, total_customers, "number", "", "Active subscribers"),
+        ("Churn Rate", f"{churn_rate}%", 0.2, False, churn_rate, "percent", "", "Of total customer base"),
+        ("Average Tenure", f"{avg_tenure} mo", 0.3, False, avg_tenure, "suffix", " mo", "Average customer relationship"),
+    ]
+    for col, (title, value, delay, accent, dv, dfmt, dsuf, sub) in zip(row1, kpi1_data):
         with col:
             st.markdown(
-                _kpi_card(title, value, delay, accent),
+                _kpi_card(title, value, delay, accent, dv, dfmt, dsuf, sub),
                 unsafe_allow_html=True,
             )
 
     row2 = st.columns(3, gap="medium")
-    for col, (title, value, delay, accent) in zip(
-        row2,
-        [
-            ("Avg. Monthly Charges", f"${avg_monthly_charges:.2f}", 0.4, False),
-            ("Best Model", best_model, 0.5, False),
-            ("Model Accuracy", model_accuracy, 0.6, True),
-        ],
-    ):
+    kpi2_data = [
+        ("Avg. Monthly Charges", f"${avg_monthly_charges:.2f}", 0.4, False, avg_monthly_charges, "currency", "", "Per customer average"),
+        ("Best Model", best_model, 0.5, False, None, "text", "", "Primary prediction model"),
+        ("Model Accuracy", model_accuracy, 0.6, True, 76.1, "percent", "", "Based on test dataset"),
+    ]
+    for col, (title, value, delay, accent, dv, dfmt, dsuf, sub) in zip(row2, kpi2_data):
         with col:
             st.markdown(
-                _kpi_card(title, value, delay, accent),
+                _kpi_card(title, value, delay, accent, dv, dfmt, dsuf, sub),
                 unsafe_allow_html=True,
             )
 
@@ -486,7 +564,7 @@ def _insights_section(
     """Four insight cards highlighting key churn patterns."""
     st.markdown('<hr class="custom-divider">', unsafe_allow_html=True)
     st.markdown(
-        '<div class="section-header">🔍 Key Insights</div>',
+        '<div class="section-header">Key Insights</div>',
         unsafe_allow_html=True,
     )
     st.markdown(
@@ -498,13 +576,13 @@ def _insights_section(
 
     cols = st.columns(4, gap="medium")
     insights = [
-        ("📅", "Month-to-Month Contracts",
+        ("◆", "Month-to-Month Contracts",
          f"{top_contract} contracts have the highest churn rate at {top_contract_pct}%.", 0.1),
-        ("⏳", "Low Tenure Customers",
+        ("◆", "Low Tenure Customers",
          f"Churned customers have an average tenure of only {churned_tenure} months.", 0.2),
-        ("💰", "Higher Monthly Charges",
+        ("◆", "Higher Monthly Charges",
          f"Churned customers pay ${churned_charges:.2f}/mo vs ${retained_charges:.2f}/mo for retained.", 0.3),
-        ("🌐", "Fiber Optic Users",
+        ("◆", "Fiber Optic Users",
          f"{top_internet} is the most common internet service among churned customers.", 0.4),
     ]
     for col, (icon, title, desc, delay) in zip(cols, insights):
@@ -518,21 +596,28 @@ def _insights_section(
 def _action_buttons() -> None:
     """CTA buttons — Open Analytics navigates to the analytics page."""
     st.markdown('<hr class="custom-divider">', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="action-btn-container">'
-        '<a class="btn-primary" href="/analytics" target="_self"><span>📈</span> Open Analytics</a>'
-        '<a class="btn-secondary"><span>🎯</span> Predict Customer</a>'
-        '</div>',
-        unsafe_allow_html=True,
-    )
+    cols = st.columns([1, 1.5, 0.5, 1.5, 1])
+    with cols[1]:
+        st.markdown('<div class="nav-btn-wrapper">', unsafe_allow_html=True)
+        st.page_link("pages/analytics.py", label="📈 Open Analytics", use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    with cols[3]:
+        st.markdown(
+            '<div style="display:flex;justify-content:center;">'
+            '<a class="btn-secondary"><span>🎯</span> Predict Customer</a>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
 
 
 def _footer() -> None:
-    """Page footer."""
+    """Page footer with version, date, developer, and GitHub link."""
     st.markdown(
         '<div class="footer">'
         '<div class="footer-title">Customer Churn Analytics Platform</div>'
-        '<div class="footer-sub">Created for Internship Presentation</div>'
+        '<div class="footer-info">'
+        'v1.0.0 <span>|</span> 2025-07-31 <span>|</span> Abhinav Agnihotri <span>|</span> github.com/abhinav/placeholder'
+        '</div>'
         '</div>',
         unsafe_allow_html=True,
     )
@@ -547,7 +632,26 @@ def main() -> None:
     """Assemble and render the Executive Dashboard."""
     _inject_css()
 
+    placeholder = st.empty()
+    with placeholder.container():
+        st.markdown(
+            '<div style="text-align:center;padding:4rem 0 2rem 0">'
+            '<div class="skeleton skeleton-header"></div>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+        for _ in range(2):
+            cols = st.columns(3, gap="medium")
+            for col in cols:
+                with col:
+                    st.markdown(
+                        '<div class="skeleton skeleton-kpi"></div>',
+                        unsafe_allow_html=True,
+                    )
+
     df = load_data()
+
+    placeholder.empty()
 
     # -- Compute KPI values --
     total_customers = get_total_customers(df)
