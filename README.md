@@ -32,6 +32,7 @@ Predict customer churn for a telecommunications company using **XGBoost** and **
 - [Requirements](#requirements)
 - [Running Locally](#running-locally)
 - [Streamlit Commands](#streamlit-commands)
+- [Deployment](#deployment)
 - [Export Features (PDF/PPT)](#export-features-pdfppt)
 - [Future Improvements](#future-improvements)
 - [Developer Information](#developer-information)
@@ -88,7 +89,7 @@ Predict customer churn for a telecommunications company using **XGBoost** and **
 | **Interpretability** | SHAP (TreeExplainer) |
 | **Data Handling** | pandas, NumPy |
 | **Model Serialization** | joblib |
-| **Export** | fpdf2 (PDF), python-pptx (PowerPoint), openpyxl |
+| **Export** | fpdf2 (PDF), python-pptx (PowerPoint) |
 | **Notebooks** | Jupyter / IPython |
 
 ---
@@ -175,7 +176,9 @@ CustomerChurnPrediction/
 ├── data/
 │   └── WA_Fn-UseC_-Telco-Customer-Churn.csv  # Raw dataset
 ├── docs/
-│   └── screenshots/                        # Dashboard screenshots used in this README
+│   ├── screenshots/                        # Dashboard screenshots used in this README
+│   ├── PERFORMANCE_REPORT.md               # Phase 9.0.5 performance optimization report
+│   └── DEPLOYMENT_READINESS_REPORT.md      # Phase 9.0.6 deployment readiness report
 ├── requirements.txt
 ├── LICENSE
 └── README.md
@@ -278,8 +281,7 @@ All dependencies are pinned loosely in [`requirements.txt`](requirements.txt):
 | `joblib` | Model serialization |
 | `fpdf2` | PDF report export |
 | `python-pptx` | PowerPoint deck export |
-| `openpyxl` | Excel utilities |
-| `jupyter`, `ipykernel` | Analysis notebooks |
+| `jupyter`, `ipykernel` | Analysis notebooks (dev only) |
 
 ---
 
@@ -323,7 +325,7 @@ streamlit run dashboard/app.py --server.headless true
 #   Press Ctrl+C in the terminal
 
 # Clear cached data / models (after updating a dataset or model)
-streamlit run dashboard/app.py --server.enableStaticServing false
+streamlit cache clear
 ```
 
 **Common flag reference:**
@@ -334,6 +336,26 @@ streamlit run dashboard/app.py --server.enableStaticServing false
 | `--server.address` | Bind address (default `localhost`) |
 | `--server.headless true` | Run without auto-opening a browser |
 | `--browser.gatherUsageStats false` | Disable usage statistics |
+
+---
+
+## 🚀 Deployment
+
+The project is **deployment-ready** — verified end-to-end in
+[`docs/DEPLOYMENT_READINESS_REPORT.md`](docs/DEPLOYMENT_READINESS_REPORT.md):
+all 6 pages render with zero errors, every PDF / PPTX / CSV / TXT export works,
+and no blocking issues were found.
+
+| Platform | Entry point | Start command |
+|---|---|---|
+| **Streamlit Cloud** | `dashboard/app.py` | Auto-installs `requirements.txt`; pick the file in the dashboard |
+| **Render** (Web Service) | `dashboard/app.py` | `streamlit run dashboard/app.py --server.address 0.0.0.0 --server.port $PORT` |
+| **Railway** | `dashboard/app.py` | `streamlit run dashboard/app.py --server.address 0.0.0.0 --server.port $PORT` |
+
+> ⚠️ **Set the Main file path to `dashboard/app.py` on Streamlit Cloud.** The
+> root `app.py` is a legacy Sprint-1 landing page and is auto-detected otherwise.
+> Pin the cloud Python runtime to **3.12 / 3.13** so `numba`/`llvmlite` wheels
+> (SHAP dependency) install cleanly.
 
 ---
 
@@ -365,7 +387,7 @@ Every report is generated **in memory** and delivered as a branded, downloadable
 ## 🔮 Future Improvements
 
 - 🔬 **Hyperparameter optimization** (Optuna) and model ensemble / stacking
-- 🌐 **Deployment** to Streamlit Community Cloud / Docker with CI/CD
+- 🌐 **Live deployment** — push the verified-ready app to Streamlit Community Cloud / Render / Railway (see [Deployment](#deployment))
 - 🗄️ **Live data source** — Postgres / API integration instead of a static CSV
 - ⏰ **Batch churn scoring** and scheduled PDF/PPTX distribution
 - 🧪 **A/B testing** of retention offers and campaign ROI tracking
